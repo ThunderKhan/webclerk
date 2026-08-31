@@ -11,11 +11,20 @@ import {
 } from "./domain";
 
 describe("webclerk deterministic domain engine", () => {
-  it("derives evidence-backed fields as verified", () => {
+  it("derives populated evidence-backed fields as verified", () => {
     const fields = deriveFields(initialFields, evidenceDocuments);
     expect(fields.find((field) => field.id === "full_name")?.status).toBe("verified");
+    expect(fields.find((field) => field.id === "dob")?.status).toBe("verified");
     expect(fields.find((field) => field.id === "institution")?.status).toBe("verified");
-    expect(fields.find((field) => field.id === "domicile_state")?.status).toBe("verified");
+  });
+
+  it("starts with evidence-backed blanks the agent can safely complete", () => {
+    const programme = inspectField("programme", initialFields, evidenceDocuments);
+    const domicile = inspectField("domicile_state", initialFields, evidenceDocuments);
+    expect(programme?.status).toBe("empty");
+    expect(domicile?.status).toBe("empty");
+    expect(suggestFieldValue("programme", evidenceDocuments)?.value).toBe("Bachelor of Computer Applications");
+    expect(suggestFieldValue("domicile_state", evidenceDocuments)?.value).toBe("Uttar Pradesh");
   });
 
   it("detects the seeded family-income conflict from evidence", () => {
@@ -51,6 +60,7 @@ describe("webclerk deterministic domain engine", () => {
     expect(unresolved.some((field) => field.id === "declaration")).toBe(true);
     expect(unresolved.some((field) => field.id === "family_income")).toBe(true);
     expect(unresolved.some((field) => field.id === "mobile")).toBe(true);
+    expect(unresolved.some((field) => field.id === "programme")).toBe(true);
   });
 
   it("reports deterministic consistency failures", () => {
@@ -65,6 +75,7 @@ describe("webclerk deterministic domain engine", () => {
     expect(preflight.critical.some((issue) => issue.fieldId === "family_income")).toBe(true);
     expect(preflight.critical.some((issue) => issue.fieldId === "income_cert_no")).toBe(true);
     expect(preflight.critical.some((issue) => issue.fieldId === "declaration")).toBe(true);
+    expect(preflight.critical.some((issue) => issue.fieldId === "programme")).toBe(true);
     expect(preflight.warnings.length).toBeGreaterThan(0);
   });
 
