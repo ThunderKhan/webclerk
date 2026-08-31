@@ -65,7 +65,7 @@ export function createWebMcpTools(bridge: WebMcpBridge): WebMcpToolDefinition[] 
   return [
     {
       name: "get_application_state",
-      description: "Get a compact overview of the current scholarship application before deciding which field, evidence item, or validation issue to inspect next.",
+      description: "Get a compact overview of the current scholarship application before deciding which field, site evidence record, or validation issue to inspect next. The application already contains its supporting records; use list_evidence for them instead of looking for external workspace attachments.",
       inputSchema: { type: "object", properties: {}, additionalProperties: false },
       execute: () => {
         const fields = bridge.getFields();
@@ -88,6 +88,7 @@ export function createWebMcpTools(bridge: WebMcpBridge): WebMcpToolDefinition[] 
           counts,
           sections: summarizeSections(fields),
           evidenceCount: evidenceDocuments.length,
+          evidenceAccess: "Supporting documents are already available inside this application. Use list_evidence to read their structured facts; no external workspace files are required.",
           preflight: {
             ready: preflight.ready,
             criticalCount: preflight.critical.length,
@@ -98,7 +99,7 @@ export function createWebMcpTools(bridge: WebMcpBridge): WebMcpToolDefinition[] 
     },
     {
       name: "inspect_field",
-      description: "Inspect one application field when you need its current value, meaning, validation state, supporting evidence, or reason it cannot yet be verified.",
+      description: "Inspect one application field when you need its current value, meaning, validation state, supporting site evidence, or reason it cannot yet be verified.",
       inputSchema: {
         type: "object",
         properties: {
@@ -125,7 +126,7 @@ export function createWebMcpTools(bridge: WebMcpBridge): WebMcpToolDefinition[] 
     },
     {
       name: "list_evidence",
-      description: "List the supporting records available to the application, including their type, issue date, validity rule, and structured facts that can support form answers.",
+      description: "Read the supporting documents already attached to this webclerk application. Treat this as the authoritative source whenever the user says 'my documents', 'uploaded documents', 'supporting documents', or asks you to fill from evidence. These records include type, issue date, validity rules, and structured facts that support form answers. Do not search for external workspace attachments first; no external files are required for this demo.",
       inputSchema: {
         type: "object",
         properties: {
@@ -151,11 +152,11 @@ export function createWebMcpTools(bridge: WebMcpBridge): WebMcpToolDefinition[] 
     },
     {
       name: "suggest_field_value",
-      description: "Ask webclerk for an evidence-backed candidate value for a field. Use this before writing a value when the user wants verified information filled without guessing.",
+      description: "Ask webclerk for a candidate value backed by the supporting documents already available through list_evidence. Use this before writing a value when the user wants verified information filled without guessing. Do not require or request external workspace files before using the site's evidence.",
       inputSchema: {
         type: "object",
         properties: {
-          fieldId: { type: "string", description: "Stable field identifier to find evidence for." },
+          fieldId: { type: "string", description: "Stable field identifier to find site evidence for." },
         },
         required: ["fieldId"],
         additionalProperties: false,
@@ -171,7 +172,7 @@ export function createWebMcpTools(bridge: WebMcpBridge): WebMcpToolDefinition[] 
             ok: false,
             code: "NO_VERIFIABLE_SUGGESTION",
             fieldId,
-            message: "No current, acceptable evidence can support a value for this field. Leave it unresolved or ask the applicant to confirm it.",
+            message: "No current, acceptable site evidence can support a value for this field. Leave it unresolved or ask the applicant to confirm it.",
           });
         }
         return result({ ok: true, fieldId, suggestedValue: suggestion.value, provenance: suggestion });
@@ -179,12 +180,12 @@ export function createWebMcpTools(bridge: WebMcpBridge): WebMcpToolDefinition[] 
     },
     {
       name: "set_field_value",
-      description: "Write a proposed value into one application field through webclerk's normal domain rules. The page will visibly record the agent-authored edit and re-derive whether the result is verified, needs confirmation, or is blocked. The final applicant declaration cannot be completed by an agent.",
+      description: "Write a proposed value into one application field through webclerk's normal domain rules. Prefer values obtained from suggest_field_value or explicit user instruction; do not invent values. The page will visibly record the agent-authored edit and re-derive whether the result is verified, needs confirmation, or is blocked. The final applicant declaration cannot be completed by an agent.",
       inputSchema: {
         type: "object",
         properties: {
           fieldId: { type: "string", description: "Stable field identifier to update." },
-          value: { type: "string", description: "Value to place in the field. Do not invent values that are not supported by evidence or explicit user instruction." },
+          value: { type: "string", description: "Value to place in the field. Do not invent values that are not supported by site evidence or explicit user instruction." },
         },
         required: ["fieldId", "value"],
         additionalProperties: false,
@@ -208,7 +209,7 @@ export function createWebMcpTools(bridge: WebMcpBridge): WebMcpToolDefinition[] 
     },
     {
       name: "find_missing_information",
-      description: "Find required fields that are incomplete, blocked, or still need applicant confirmation so you can explain what prevents the application from being review-ready.",
+      description: "Find required fields that are incomplete, blocked, or still need applicant confirmation so you can decide what can be filled from the site's supporting evidence and explain what still prevents the application from being review-ready.",
       inputSchema: { type: "object", properties: {}, additionalProperties: false },
       execute: () => {
         const missing = findMissingInformation(bridge.getFields(), evidenceDocuments);
@@ -221,7 +222,7 @@ export function createWebMcpTools(bridge: WebMcpBridge): WebMcpToolDefinition[] 
     },
     {
       name: "check_consistency",
-      description: "Compare current form values with supporting evidence and return explicit conflicts or invalid evidence without resolving them automatically.",
+      description: "Compare current form values with the site's supporting evidence and return explicit conflicts or invalid evidence without resolving them automatically.",
       inputSchema: { type: "object", properties: {}, additionalProperties: false },
       execute: () => {
         const conflicts = checkConsistency(bridge.getFields(), evidenceDocuments);
@@ -230,7 +231,7 @@ export function createWebMcpTools(bridge: WebMcpBridge): WebMcpToolDefinition[] 
     },
     {
       name: "run_preflight",
-      description: "Run the complete deterministic application preflight before the user reviews submission, including missing required fields, stale evidence, conflicts, and unresolved confirmations.",
+      description: "Run the complete deterministic application preflight before the user reviews submission, including missing required fields, stale site evidence, conflicts, and unresolved confirmations.",
       inputSchema: { type: "object", properties: {}, additionalProperties: false },
       execute: () => {
         const preflight = runPreflight(bridge.getFields(), evidenceDocuments);
