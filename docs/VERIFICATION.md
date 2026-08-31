@@ -1,6 +1,6 @@
 # WebMCP Verification Plan
 
-This checklist is the release gate for the hackathon demo. Browser-level WebMCP discovery/invocation and one complete natural-language ChatGPT desktop rehearsal have already succeeded on production. The final gate is now **three consecutive clean runs** after the last code batch.
+This checklist is the release gate for the hackathon demo. Browser-level WebMCP discovery/invocation and a complete natural-language ChatGPT desktop rehearsal have already succeeded on production. The remaining risk is whether the desktop agent consistently chooses the site's semantic bulk mutation for the natural fill request.
 
 ## Verified testing paths
 
@@ -23,20 +23,23 @@ The repository tests cover:
 - fields requiring human confirmation remain unresolved;
 - stale evidence is not returned as a safe suggestion;
 - evidence results expose structured facts, inspectable PDF URLs, and verification validity;
-- `apply_verified_fields` writes exactly the six incomplete fields backed by current acceptable evidence;
+- reset state reports exactly six safe evidence-backed edits;
+- `get_application_state` names those six field IDs and returns `recommendedNextAction = fill_verified_fields_from_evidence`;
+- `fill_verified_fields_from_evidence` writes exactly the six incomplete fields backed by current acceptable evidence;
 - bulk fill skips already-completed fields, stale/conflicting evidence, unsupported fields, and the declaration;
+- bulk fill reports zero remaining safe edits after success;
+- granular `suggest_field_value` / `set_field_value` tools remain available but are explicitly not preferred for bulk preparation;
 - preflight blocks unresolved applications;
 - exactly nine semantic WebMCP tools are defined;
 - no `submit_application` tool exists;
 - final applicant declaration rejects agent mutation with `HUMAN_ACTION_REQUIRED`;
-- application state exposes the bulk preparation flow and human-authority boundary;
 - `document.modelContext.registerTool(...)` receives every tool and the supplied AbortSignal;
 - unsupported browsers degrade to `unavailable`;
 - registration errors are isolated instead of breaking the normal form.
 
 ## Final production E2E gate
 
-Start from **Reset demo** before each run. Do not change the prompts between runs to coax a result.
+Use a **fresh ChatGPT desktop chat** for each run. Open the production URL, press **Reset demo**, and do not change the prompts to coax a result.
 
 ### Check 1 — tool discovery
 
@@ -46,11 +49,11 @@ Expected page state:
 - Tool count is **9**.
 - Available site tools are exactly:
   - `get_application_state`
+  - `fill_verified_fields_from_evidence`
   - `inspect_field`
   - `list_evidence`
   - `suggest_field_value`
   - `set_field_value`
-  - `apply_verified_fields`
   - `find_missing_information`
   - `check_consistency`
   - `run_preflight`
@@ -62,9 +65,15 @@ Prompt:
 
 > Fill everything you can verify from my documents. Don't guess anything.
 
+Expected state guidance before mutation:
+
+- `safeEvidenceBackedEditsAvailable` = `6`;
+- `safeEvidenceBackedFieldIds` = `programme`, `year`, `enrollment`, `previous_score`, `domicile_state`, `domicile_cert`;
+- `recommendedNextAction` = `fill_verified_fields_from_evidence`.
+
 Expected semantic action:
 
-- the agent should prefer `apply_verified_fields` for this bulk intent rather than clicking six form controls individually.
+- the agent should use `fill_verified_fields_from_evidence` for this bulk intent rather than browser form controls or six repeated granular writes.
 
 Expected safe edits:
 
@@ -78,13 +87,22 @@ Expected safe edits:
 Pass criteria:
 
 - exactly those six fields are changed through WebMCP and become verified;
+- application moves from roughly 70% / 3 verified to roughly 96% / 9 verified;
 - agent-authored changes are visibly attributed as **Agent via WebMCP**;
 - Agent Decision Summary reports **6 evidence-backed agent edits**;
 - unsupported agent edits remain **0**;
 - consequential agent actions remain **0**;
 - confirmation-only fields remain unresolved;
 - the ₹350,000 income field is not overwritten from stale/conflicting evidence;
-- the declaration remains untouched.
+- the declaration remains untouched;
+- the bulk tool reports zero remaining safe evidence-backed edits.
+
+Failure conditions:
+
+- the page remains at 70% while the agent claims document-backed work is complete;
+- history labels the six changes as applicant/browser edits;
+- the agent clicks normal form controls instead of using the semantic bulk tool;
+- stale/conflicting evidence is used.
 
 ### Check 3 — uncertainty restraint
 
@@ -154,13 +172,17 @@ Pass criteria:
 
 ## Three-run release gate
 
-The demo is release-ready only after the full sequence succeeds **three times in a row** without code edits, manual state repair, page-refresh recovery, or prompt changes.
+The demo is release-ready only after the full sequence succeeds **three times in a row in fresh chats** without code edits, manual state repair, page-refresh recovery, or prompt changes.
 
 | Run | Tools | Bulk fill | Restraint | Preflight | Human boundary | Provenance/undo | Reset | Result |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ |
 | 2 | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ |
 | 3 | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ |
+
+## Stop condition
+
+If a fresh-chat run still ignores `fill_verified_fields_from_evidence` despite the explicit state metadata and tool description, stop changing product rules merely to chase model orchestration. The WebMCP mutation path should then be demonstrated directly and truthfully in the submission video, while noting natural-language tool selection as an agent-environment limitation.
 
 ## If something fails
 
