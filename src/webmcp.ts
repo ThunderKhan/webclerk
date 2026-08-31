@@ -16,6 +16,7 @@ export const WEBMCP_TOOL_NAMES = [
   "list_evidence",
   "suggest_field_value",
   "set_field_value",
+  "apply_verified_fields",
   "find_missing_information",
   "check_consistency",
   "run_preflight",
@@ -80,7 +81,7 @@ export function createWebMcpTools(bridge: WebMcpBridge): WebMcpToolDefinition[] 
   return [
     {
       name: "get_application_state",
-      description: "Get the current scholarship application state before acting. The application already contains its supporting records; use list_evidence rather than searching for external workspace attachments. A normal evidence-backed preparation flow is list_evidence → find_missing_information → suggest_field_value → set_field_value → run_preflight. Never infer confirmation-only fields, resolve conflicts silently, attest the declaration, or submit the application.",
+      description: "Get the current scholarship application state before acting. The application already contains its supporting records; use list_evidence rather than searching for external workspace attachments. If the user asks to fill everything that can be verified, prefer apply_verified_fields. For a single field, use suggest_field_value then set_field_value. Finish with run_preflight. Never infer confirmation-only fields, resolve conflicts silently, attest the declaration, or submit the application.",
       inputSchema: { type: "object", properties: {}, additionalProperties: false },
       execute: () => {
         const fields = bridge.getFields();
@@ -106,10 +107,12 @@ export function createWebMcpTools(bridge: WebMcpBridge): WebMcpToolDefinition[] 
           evidenceAccess: "Supporting documents are already available inside this application as pre-extracted structured evidence. Use list_evidence; no external workspace files are required for this demo.",
           recommendedFlow: [
             "list_evidence",
-            "find_missing_information",
+            "apply_verified_fields",
+            "run_preflight",
+          ],
+          granularEditFlow: [
             "suggest_field_value",
             "set_field_value",
-            "run_preflight",
           ],
           humanAuthority: {
             declaration: "human_only",
@@ -188,7 +191,7 @@ export function createWebMcpTools(bridge: WebMcpBridge): WebMcpToolDefinition[] 
     },
     {
       name: "suggest_field_value",
-      description: "Return a candidate value only when current, acceptable site evidence supports it. Use this before writing evidence-backed values. If no acceptable evidence exists, leave the field unresolved or ask the applicant; never substitute confidence, inference, stale evidence, or a conflicting value for proof.",
+      description: "Return a candidate value only when current, acceptable site evidence supports it. Use this for one-field edits. If the user asks to fill every verifiable field, prefer apply_verified_fields. If no acceptable evidence exists, leave the field unresolved or ask the applicant; never substitute confidence, inference, stale evidence, or a conflicting value for proof.",
       inputSchema: {
         type: "object",
         properties: {
@@ -251,6 +254,62 @@ export function createWebMcpTools(bridge: WebMcpBridge): WebMcpToolDefinition[] 
           });
         }
         return result(bridge.setFieldFromAgent(fieldId, value));
+      },
+    },
+    {
+      name: "apply_verified_fields",
+      description: "Fill every currently incomplete application field that can be verified from current, acceptable site evidence. Use this when the user asks to fill everything that can be verified, prepare the form from their documents, or complete all safe document-backed fields without guessing. This tool performs the semantic bulk write through webclerk itself so edits are attributed to the WebMCP agent. It skips already completed fields, confirmation-only fields, stale evidence, conflicts, the applicant declaration, and anything without acceptable evidence. It never submits the application.",
+      inputSchema: { type: "object", properties: {}, additionalProperties: false },
+      execute: () => {
+        const before = bridge.getFields();
+        const applied: Array<{ fieldId: string; value: string; source: string; status?: string }> = [];
+        const skipped: Array<{ fieldId: string; reason: string }> = [];
+
+        for (const field of before) {
+          if (field.id === "declaration") {
+            skipped.push({ fieldId: field.id, reason: "human_only" });
+            continue;
+          }
+          if (field.value.trim() !== "") {
+            skipped.push({ fieldId: field.id, reason: "already_completed" });
+            continue;
+          }
+
+          const suggestion = suggestFieldValue(field.id, evidenceDocuments);
+          if (!suggestion) {
+            skipped.push({ fieldId: field.id, reason: "no_current_acceptable_evidence" });
+            continue;
+          }
+
+          const mutation = bridge.setFieldFromAgent(field.id, suggestion.value);
+          if (!mutation.ok) {
+            skipped.push({ fieldId: field.id, reason: mutation.message });
+            continue;
+          }
+
+          applied.push({
+            fieldId: field.id,
+            value: suggestion.value,
+            source: suggestion.evidenceName,
+            status: mutation.field?.status,
+          });
+        }
+
+        return result({
+          ok: true,
+          appliedCount: applied.length,
+          applied,
+          skippedCount: skipped.length,
+          skipped,
+          policy: {
+            unsupportedGuesses: 0,
+            declaration: "human_only",
+            submission: "not_exposed_as_a_webmcp_tool",
+          },
+          message: applied.length > 0
+            ? `Applied ${applied.length} current evidence-backed field value(s). Uncertain, stale, conflicting, and human-only fields were left unchanged.`
+            : "No incomplete field currently has acceptable evidence that can be applied safely.",
+        });
       },
     },
     {
