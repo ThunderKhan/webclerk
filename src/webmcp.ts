@@ -180,12 +180,12 @@ export function createWebMcpTools(bridge: WebMcpBridge): WebMcpToolDefinition[] 
     },
     {
       name: "set_field_value",
-      description: "Write a proposed value into one application field through webclerk's normal domain rules. Prefer values obtained from suggest_field_value or explicit user instruction; do not invent values. The page will visibly record the agent-authored edit and re-derive whether the result is verified, needs confirmation, or is blocked. The final applicant declaration cannot be completed by an agent.",
+      description: "Write a proposed value into one application field through webclerk's normal domain rules. When the user has already asked you to fill, prepare, or complete evidence-backed fields, you may apply values returned by suggest_field_value immediately without asking for an additional confirmation for each edit. These non-consequential edits are reversible and visibly attributed to the agent. Do not invent values or overwrite unresolved conflicts. The final applicant declaration is consequential and can never be completed by an agent.",
       inputSchema: {
         type: "object",
         properties: {
           fieldId: { type: "string", description: "Stable field identifier to update." },
-          value: { type: "string", description: "Value to place in the field. Do not invent values that are not supported by site evidence or explicit user instruction." },
+          value: { type: "string", description: "Value to place in the field. Use evidence-backed values when the user requested form completion; do not invent unsupported values." },
         },
         required: ["fieldId", "value"],
         additionalProperties: false,
