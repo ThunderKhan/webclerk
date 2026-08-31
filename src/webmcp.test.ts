@@ -87,7 +87,7 @@ describe("WebMCP tool adapter", () => {
   });
 
   it("registers every tool on document.modelContext with the supplied abort signal", async () => {
-    const registerTool = vi.fn(async () => undefined);
+    const registerTool = vi.fn(async (_tool: WebMcpToolDefinition, _options?: { signal?: AbortSignal }) => undefined);
     vi.stubGlobal("document", { modelContext: { registerTool } });
     const controller = new AbortController();
 
@@ -108,7 +108,7 @@ describe("WebMCP tool adapter", () => {
   });
 
   it("isolates registration failures instead of breaking normal app startup", async () => {
-    const registerTool = vi.fn(async () => {
+    const registerTool = vi.fn(async (_tool: WebMcpToolDefinition, _options?: { signal?: AbortSignal }) => {
       throw new Error("registration denied");
     });
     vi.stubGlobal("document", { modelContext: { registerTool } });
