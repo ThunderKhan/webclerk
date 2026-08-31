@@ -1,18 +1,207 @@
 # webclerk
 
-> Never guess on consequential forms.
+> **Never guess on consequential forms.**
 
-webclerk is a WebMCP-powered application workspace for completing high-stakes online forms with an AI agent that can understand fields, verify suggested answers against supporting evidence, surface uncertainty and inconsistencies, and prepare an application without silently guessing or submitting on the user's behalf.
+**Live demo:** https://webclerk.netlify.app/
 
-Built for the OpenAI WebMCP Challenge.
+webclerk is a WebMCP-powered trust layer for consequential web forms. It lets an agent inspect the same application the human sees, read structured supporting evidence, fill only values that can be verified, preserve uncertainty, surface conflicts and stale evidence, and prepare the application without taking over truthfulness attestations or final submission.
 
-> **Prototype notice:** the scholarship, department, application identifiers and government-style interface in this repository are fictional. webclerk is not affiliated with or endorsed by the Government of India or any public authority.
+The current prototype uses a fictional Indian scholarship workflow to demonstrate the pattern end to end.
 
-## Current prototype
+> **Prototype notice:** the scholarship, department, application identifiers, PDFs, and government-style interface in this repository are fictional. webclerk is not affiliated with or endorsed by the Government of India or any public authority.
 
-The current prototype implements a realistic Indian public-service-style scholarship application inspired by the official UX4G Design System and GIGW 3.0 guidance. The UI contains 23 fields, four application sections, five seeded evidence records, deterministic field-state derivation, conflict/staleness checks, preflight validation, undoable change history, a real WebMCP tool layer, and an inspectable trust UX.
+## For judges
 
-A judge can now inspect **why** a field is verified, uncertain, or blocked, see the exact supporting evidence/value, identify which fields were changed by a WebMCP agent, distinguish human edits from agent edits, and see a final review gate that explicitly reserves attestation/submission for the applicant.
+Open the live app in a WebMCP-capable environment and use these prompts in order:
+
+1. **"Fill everything you can verify from my documents. Don't guess anything."**
+2. **"Why didn't you fill mode of study?"**
+3. **"Check everything before I submit."**
+4. **"Complete the declaration for me."**
+
+Expected behavior:
+
+- the agent fills only current, evidence-backed fields;
+- `mode of study` remains unresolved because the enrollment certificate does not explicitly state it;
+- the form preserves the ₹3,50,000 application value while surfacing the ₹3,20,000 evidence conflict;
+- the income certificate remains blocked because it is outside the accepted 12-month validity window;
+- preflight reports blockers, unresolved confirmations, and the missing human declaration;
+- the agent cannot complete the truthfulness declaration;
+- there is intentionally no `submit_application` WebMCP tool.
+
+## Why WebMCP
+
+webclerk is not using WebMCP as a wrapper around a normal chatbot feature. The page itself exposes semantic capabilities such as `list_evidence`, `inspect_field`, `suggest_field_value`, `set_field_value`, and `run_preflight` through `document.modelContext.registerTool(...)`.
+
+That means an external agent can work with **application concepts directly** instead of relying on brittle DOM scraping, screen coordinates, or a one-off integration. Human and agent operate over the same browser-visible state, and every agent mutation goes back through the page's deterministic evidence rules.
+
+This enables a collaboration model where:
+
+- the **site** defines what evidence and actions mean;
+- the **agent** can prepare reversible, non-consequential edits;
+- the **human** retains authority over ambiguous facts, truthfulness attestations, and final submission.
+
+## The core demo
+
+The scholarship starts partially complete. Six safe evidence-backed fields are intentionally blank so the agent can make visible progress:
+
+- programme of study;
+- current year of study;
+- enrollment number;
+- previous academic-year percentage;
+- state of domicile;
+- domicile certificate number.
+
+The demo also contains two deliberate financial problems:
+
+- the form says annual family income is **₹3,50,000**;
+- the income certificate says **₹3,20,000** and is older than the accepted 12-month window.
+
+Most autofill systems optimize for completion. webclerk optimizes for **justified completion**.
+
+## Trust invariants
+
+1. **Evidence, not confidence** — model confidence alone can never make a value verified.
+2. **Uncertainty stays visible** — unsupported, ambiguous, stale, or conflicting information is never silently promoted.
+3. **Agent edits are reversible** — agent-authored changes are visibly attributed and can be undone.
+4. **Conflicts are surfaced, not auto-resolved** — the agent cannot silently choose between contradictory values.
+5. **Human commits** — declaration and final submission remain human actions.
+
+## WebMCP tools
+
+webclerk exposes exactly eight semantic tools:
+
+- `get_application_state`
+- `inspect_field`
+- `list_evidence`
+- `suggest_field_value`
+- `set_field_value`
+- `find_missing_information`
+- `check_consistency`
+- `run_preflight`
+
+There is deliberately **no** `submit_application` tool.
+
+`set_field_value` rejects attempts to complete the applicant declaration with:
+
+```text
+HUMAN_ACTION_REQUIRED
+```
+
+The tool surface also communicates a recommended preparation flow:
+
+```text
+list_evidence
+  → find_missing_information
+  → suggest_field_value
+  → set_field_value
+  → run_preflight
+```
+
+## Architecture
+
+```text
+Fictional source PDFs
+        │
+        ▼
+Pre-extracted structured evidence
+        │
+        ▼
+Deterministic evidence + validation engine
+        │
+        ├──────────────► Human-visible form state
+        │                       ▲
+        ▼                       │
+WebMCP semantic tools ──────────┘
+        │
+        ▼
+ChatGPT / external browser agent
+```
+
+The agent and the human are not editing separate copies of the application. Both act on the same page state.
+
+## Evidence model
+
+The demo includes five fictional source PDFs:
+
+- `Identity_Card.pdf`
+- `Enrollment_Certificate.pdf`
+- `Previous_Year_Marksheet.pdf`
+- `Income_Certificate.pdf`
+- `Domicile_Certificate.pdf`
+
+Each evidence record exposes:
+
+- document type;
+- issue metadata;
+- human-inspectable PDF URL;
+- pre-extracted structured facts;
+- validity status;
+- whether the evidence is acceptable for verification.
+
+### MVP limitation
+
+The included PDFs are **not parsed dynamically**. The prototype uses a fixed, pre-extracted structured evidence set so the trust and WebMCP behavior can remain deterministic and easy to audit. Arbitrary PDF upload, OCR, document classification, and extraction are intentionally outside this hackathon MVP.
+
+A production ingestion layer could sit before the current evidence engine:
+
+```text
+PDF / OCR / document parser
+        ↓
+Normalized evidence facts
+        ↓
+Current webclerk evidence engine
+```
+
+## What the UI makes visible
+
+The interface exposes more than a completion percentage. It shows:
+
+- verified, confirmation-required, blocked, and incomplete counts;
+- an **Agent Decision Summary**;
+- evidence-backed agent edit count;
+- unresolved applicant confirmations;
+- blockers surfaced;
+- unsupported agent edit count;
+- consequential agent action count;
+- provenance from field → PDF → evidence fact → validity → decision rule → result;
+- agent-vs-applicant change history;
+- direct links to fictional source PDFs;
+- deterministic preflight;
+- a human-only declaration/submission boundary.
+
+## Broader applications
+
+The scholarship is a reference workflow, not the limit of the idea. The same pattern applies to consequential forms such as:
+
+- insurance claims;
+- visa applications;
+- public benefits;
+- financial aid;
+- compliance questionnaires;
+- healthcare intake;
+- procurement and vendor onboarding.
+
+## Verified environments
+
+The prototype has been exercised in:
+
+- **Brave with WebMCP enabled** for direct browser-level tool discovery and invocation;
+- **ChatGPT desktop built-in browser** for natural-language agent orchestration;
+- **Netlify production deployment** at https://webclerk.netlify.app/.
+
+Validated behavior includes:
+
+- exact discovery of all eight tools;
+- state reads;
+- evidence-backed shared-state mutation;
+- visible agent attribution;
+- conflict detection;
+- stale-evidence detection;
+- uncertainty preservation;
+- deterministic preflight;
+- declaration rejection with `HUMAN_ACTION_REQUIRED` at the WebMCP boundary;
+- no autonomous submit tool.
 
 ## Run locally
 
@@ -29,45 +218,7 @@ npm run build
 npm run preview
 ```
 
-WebMCP itself requires a supported browser/agent environment. In ordinary browsers the human interface remains fully functional and displays WebMCP as unavailable rather than failing startup.
-
-## MVP
-
-The hackathon MVP focuses on one realistic fictional scholarship application with 23 fields and five supporting documents. The experience demonstrates three core ideas:
-
-1. **Evidence-backed answers** — every suggested value is traceable to a source.
-2. **Uncertainty is visible** — fields can be verified, require confirmation, or be blocked by missing/conflicting evidence.
-3. **Human authority** — the agent may inspect, explain, suggest, validate, and prepare; consequential attestation and submission remain human actions.
-
-## Core demo flow
-
-1. Open the scholarship application.
-2. Ask the agent: **"Fill everything you can verify from my documents. Don't guess anything."**
-3. Watch verified fields update while unsupported fields remain unresolved.
-4. Click **Why this status?** to inspect evidence provenance and decision rules.
-5. Ask the agent to run preflight through WebMCP.
-6. Detect the deliberate income conflict and stale income certificate before submission.
-7. See every agent-authored mutation highlighted in the form and attributed in change history.
-8. Reach the review gate and show that declaration/submission remain human-only.
-
-## WebMCP
-
-webclerk exposes the application's semantic state through `document.modelContext.registerTool(...)`, allowing an agent to work with fields, evidence, validation results, and application state directly instead of inferring intent from UI structure alone.
-
-Implemented tool surface:
-
-- `get_application_state`
-- `inspect_field`
-- `list_evidence`
-- `suggest_field_value`
-- `set_field_value`
-- `find_missing_information`
-- `check_consistency`
-- `run_preflight`
-
-The adapter includes feature detection and isolated registration failure handling. `set_field_value` records agent-originated edits visibly and then re-runs normal domain derivation. The final applicant declaration is explicitly rejected with `HUMAN_ACTION_REQUIRED` when an agent attempts to complete it.
-
-There is intentionally **no autonomous `submit_application` tool** in the MVP.
+WebMCP itself requires a supported browser/agent environment. In an ordinary browser the human interface remains functional and reports WebMCP as unavailable instead of failing startup.
 
 ## Project docs
 
@@ -77,17 +228,20 @@ There is intentionally **no autonomous `submit_application` tool** in the MVP.
 - [`docs/WEBMCP.md`](docs/WEBMCP.md) — WebMCP contract and tool semantics
 - [`docs/DESIGN.md`](docs/DESIGN.md) — UX4G/GIGW-informed visual and accessibility specification
 - [`docs/DEMO.md`](docs/DEMO.md) — three-minute judging/demo narrative
+- [`docs/VERIFICATION.md`](docs/VERIFICATION.md) — real-browser verification checklist
 - [`docs/BUILD_PLAN.md`](docs/BUILD_PLAN.md) — milestone sequence and scope kill-list
 
 ## Status
 
-- [x] Milestone 0 — product foundation
-- [x] Milestone 1 — static government-style application workspace
-- [x] Milestone 2 — deterministic domain logic
-- [x] Milestone 3 — WebMCP tool layer
-- [x] Milestone 4 — trust UX hardening
-- [ ] Milestone 5 — demo hardening
-- [ ] Milestone 6 — submission
+- [x] Product foundation
+- [x] Static government-style application workspace
+- [x] Deterministic evidence and validation logic
+- [x] WebMCP tool layer
+- [x] Trust UX and provenance
+- [x] Real-browser WebMCP verification
+- [x] Natural-language agent rehearsal
+- [ ] Three consecutive clean final runs
+- [ ] Demo video and submission
 
 ## License
 
