@@ -10,6 +10,7 @@ import {
   ChangeRecord,
   deriveFields,
   evidenceFacts,
+  isEvidenceStale,
   makeChangeRecord,
   runPreflight,
 } from "./domain";
@@ -35,6 +36,11 @@ function webMcpStatusCopy(status: WebMcpAvailability) {
   return "WebMCP unavailable in this browser";
 }
 
+function sourceUrlForName(name?: string) {
+  if (!name) return undefined;
+  return evidenceDocuments.find((document) => document.name === name)?.sourceUrl;
+}
+
 function FieldControl({
   field,
   onChange,
@@ -52,6 +58,7 @@ function FieldControl({
     onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => onChange(field.id, event.target.value),
     "aria-describedby": `${field.id}-help ${field.id}-status`,
   };
+  const sourceUrl = sourceUrlForName(field.source);
 
   return (
     <div className={`form-field state-${field.status} ${touchedByAgent ? "agent-touched" : ""}`}>
@@ -76,7 +83,11 @@ function FieldControl({
 
       <div id={`${field.id}-help`} className="field-help">
         {field.hint && <span>{field.hint}</span>}
-        {field.source && <span className="source-line">Source: {field.source}</span>}
+        {field.source && (
+          sourceUrl
+            ? <a className="source-line source-link" href={sourceUrl} target="_blank" rel="noreferrer">Source: {field.source} ↗</a>
+            : <span className="source-line">Source: {field.source}</span>
+        )}
         {field.issue && <span className="issue-line">{field.issue}</span>}
         {touchedByAgent && <span className="agent-ribbon">Changed through WebMCP</span>}
         <button type="button" className="field-inspect-button" onClick={() => onInspect(field.id)}>Why this status?</button>
@@ -166,6 +177,11 @@ function App() {
   const agentChangedIds = useMemo(() => new Set(history.filter((record) => record.origin === "agent").map((record) => record.fieldId)), [history]);
   const completed = fields.filter((field) => field.value.trim() !== "").length;
   const completion = Math.round((completed / fields.length) * 100);
+  const agentVerifiedEdits = [...agentChangedIds].filter((id) => fields.find((field) => field.id === id)?.status === "verified").length;
+  const unsupportedAgentEdits = [...agentChangedIds].filter((id) => fields.find((field) => field.id === id)?.status !== "verified").length;
+  const consequentialAgentActions = history.filter((record) => record.origin === "agent" && record.fieldId === "declaration").length;
+  const blockedPreflightIssues = preflight.critical.filter((issue) => issue.id.startsWith("blocked-")).length;
+  const incompletePreflightIssues = preflight.critical.length - blockedPreflightIssues;
 
   function inspectField(id: string) {
     const field = fields.find((item) => item.id === id);
@@ -216,6 +232,14 @@ function App() {
 
   const visibleFields = fields.filter((field) => field.section === activeSection);
   const reviewReady = preflight.ready;
+  const selectedEvidenceStale = selectedEvidence ? isEvidenceStale(selectedEvidence) : false;
+  const selectedEvidenceValidity = selectedEvidence
+    ? selectedEvidenceStale
+      ? "Stale — outside accepted validity window"
+      : selectedEvidence.status === "accepted"
+        ? "Current and acceptable"
+        : "Attention required"
+    : "No authoritative evidence mapped";
 
   return (
     <div className="site-shell">
@@ -239,7 +263,7 @@ function App() {
 
         {showNotice && <section className="prototype-notice" role="status"><div><strong>Prototype notice:</strong> This is a fictional scholarship portal built for the OpenAI WebMCP Challenge. It is not affiliated with any ministry, department, scholarship scheme, or government service.</div><button type="button" onClick={() => setShowNotice(false)} aria-label="Dismiss prototype notice">×</button></section>}
 
-        <section className="application-heading"><div><span className="eyebrow">Application ID: {scholarship.applicationId}</span><h2>{scholarship.name}</h2><p>{scholarship.department}</p></div><div className="deadline-card"><span>Last date</span><strong>{scholarship.closingDate}</strong></div></section>
+        <section className="application-heading"><div><span className="product-kicker">Powered by <strong>webclerk</strong> · Never guess on consequential forms.</span><span className="eyebrow">Application ID: {scholarship.applicationId}</span><h2>{scholarship.name}</h2><p>{scholarship.department}</p></div><div className="deadline-card"><span>Last date</span><strong>{scholarship.closingDate}</strong></div></section>
 
         <section className="trust-strip" aria-label="webclerk trust model">
           <div className="trust-pillar"><strong>1. Evidence, not confidence</strong><span>Verified values show the document that supports them.</span></div>
@@ -252,7 +276,19 @@ function App() {
           <div className="status-summary"><div><strong>{counts.verified}</strong><span>Verified</span></div><div><strong>{counts.needs_confirmation}</strong><span>Review</span></div><div><strong>{counts.blocked}</strong><span>Blocked</span></div><div><strong>{counts.empty}</strong><span>Incomplete</span></div></div>
         </section>
 
-        {showPreflight && <section className={`review-gate ${reviewReady ? "ready" : "blocked"}`} aria-live="polite"><div><span className="step-kicker">Final review gate</span><h3>{reviewReady ? "Ready for applicant review" : "Human review required before submission"}</h3><p>{reviewReady ? "All deterministic checks passed. The applicant must still read the declaration and submit personally." : `${preflight.critical.length} critical issue(s) and ${preflight.warnings.length} confirmation item(s) remain. The agent cannot bypass this gate.`}</p><div className="human-only-note">Declaration and submission are intentionally unavailable to WebMCP tools.</div></div><div className="gate-badge">{reviewReady ? "PREPARED, NOT SUBMITTED" : "SUBMISSION BLOCKED"}</div></section>}
+        <section className="agent-decision-summary" aria-label="Agent decision summary">
+          <div className="decision-summary-heading"><div><span className="step-kicker">Agent decision summary</span><h3>Preparation without unsupported guesses</h3></div><span className="reversible-note">Agent edits are reversible · Undo any edit before review</span></div>
+          <div className="decision-metrics">
+            <div><strong>{agentVerifiedEdits}</strong><span>Evidence-backed agent edits</span></div>
+            <div><strong>{counts.needs_confirmation}</strong><span>Applicant confirmations preserved</span></div>
+            <div><strong>{counts.blocked}</strong><span>Blockers surfaced</span></div>
+            <div><strong>{unsupportedAgentEdits}</strong><span>Unsupported agent edits</span></div>
+            <div><strong>{consequentialAgentActions}</strong><span>Consequential agent actions</span></div>
+          </div>
+          <div className="authority-boundary"><strong>Human-only boundary</strong><span>Truthfulness declaration and final submission remain applicant actions. Final submission is intentionally not exposed as a WebMCP tool.</span></div>
+        </section>
+
+        {showPreflight && <section className={`review-gate ${reviewReady ? "ready" : "blocked"}`} aria-live="polite"><div><span className="step-kicker">Final review gate</span><h3>{reviewReady ? "Ready for applicant review" : "Not ready for applicant submission"}</h3><p>{reviewReady ? "All deterministic checks passed. The applicant must still read the declaration and submit personally." : `${blockedPreflightIssues} blocked evidence issue(s), ${preflight.warnings.length} applicant confirmation(s), and ${incompletePreflightIssues} incomplete required action(s) remain.`}</p><div className="human-only-note">The agent can prepare the application but cannot resolve evidence conflicts, attest truthfulness, or submit.</div></div><div className="gate-badge">{reviewReady ? "PREPARED, NOT SUBMITTED" : "SUBMISSION BLOCKED"}</div></section>}
 
         {showPreflight && !reviewReady && <section className="preflight-card" aria-live="polite"><div className="preflight-heading"><div><span className="step-kicker">Deterministic preflight</span><h3>Application needs attention</h3></div><div className="preflight-counts"><strong>{preflight.critical.length}</strong> critical · <strong>{preflight.warnings.length}</strong> warnings</div></div><div className="preflight-issues">{[...preflight.critical, ...preflight.warnings].map((issue) => <button key={issue.id} className={`preflight-issue ${issue.severity}`} type="button" onClick={() => issue.fieldId && inspectField(issue.fieldId)}><strong>{issue.title}</strong><span>{issue.detail}</span></button>)}</div></section>}
 
@@ -271,27 +307,32 @@ function App() {
 
             <div className="fields-grid">{visibleFields.map((field) => <FieldControl key={field.id} field={field} onChange={updateField} onInspect={inspectField} touchedByAgent={agentChangedIds.has(field.id)} />)}</div>
 
+            {activeSection === "eligibility" && <div className="human-commit-box"><strong>Human-only actions</strong><span>Truthfulness declaration</span><span>Final submission</span><p>These consequential actions are deliberately outside the agent's authority.</p></div>}
+
             <div className="form-actions"><button type="button" className="secondary-button" disabled={sectionOrder.indexOf(activeSection) === 0} onClick={() => setActiveSection(sectionOrder[Math.max(0, sectionOrder.indexOf(activeSection) - 1)])}>Previous</button><div className="action-right"><button type="button" className="secondary-button" onClick={() => setShowPreflight(true)}>Run preflight</button><button type="button" className="secondary-button">Save as draft</button><button type="button" className="primary-button" disabled={sectionOrder.indexOf(activeSection) === sectionOrder.length - 1} onClick={() => setActiveSection(sectionOrder[Math.min(sectionOrder.length - 1, sectionOrder.indexOf(activeSection) + 1)])}>Save & continue</button></div></div>
           </section>
 
           <aside className="evidence-panel" aria-labelledby="evidence-title">
             <div className="panel-heading"><div><span className="step-kicker">Supporting records</span><h3 id="evidence-title">Evidence & Trust</h3></div><span className="document-count">{evidenceDocuments.length}</span></div>
 
-            <div className={`webmcp-card ${webMcpStatus}`} aria-live="polite"><div className="webmcp-status-row"><span className="webmcp-dot" aria-hidden="true" /><div><strong>WebMCP</strong><span>{webMcpStatusCopy(webMcpStatus)}</span></div></div><p>{webMcpStatus === "available" ? `${registeredToolCount} semantic tools are exposed. Agent edits flow through the same evidence rules and appear below.` : "The human application remains fully functional when the experimental browser API is absent."}</p>{webMcpStatus === "available" && <small>{WEBMCP_TOOL_NAMES.join(" · ")}</small>}</div>
+            <div className={`webmcp-card ${webMcpStatus}`} aria-live="polite"><div className="webmcp-status-row"><span className="webmcp-dot" aria-hidden="true" /><div><strong>WebMCP</strong><span>{webMcpStatusCopy(webMcpStatus)}</span></div></div><p>{webMcpStatus === "available" ? `${registeredToolCount} semantic tools are exposed. Agent edits flow through the same evidence rules and appear below.` : "The human application remains fully functional when the experimental browser API is absent."}</p>{webMcpStatus === "available" && <><small>{WEBMCP_TOOL_NAMES.join(" · ")}</small><div className="semantic-tool-note"><strong>Semantic tools, not DOM scraping</strong><span>The agent works with application concepts directly instead of coordinates or brittle label scraping.</span></div><div className="no-submit-note">No <code>submit_application</code> capability is exposed.</div></>}</div>
 
-            {selectedField && <section className="trust-inspector" aria-live="polite"><div className="trust-inspector-heading"><div><span className="step-kicker">Why this status?</span><h4>{selectedField.label}</h4></div><button type="button" onClick={() => setSelectedFieldId("")} aria-label="Close field explanation">×</button></div><div className="trust-inspector-body"><div className="trust-state"><span className={`trust-state-dot ${selectedField.status}`} /><strong>{statusLabel(selectedField.status)}</strong></div><dl><dt>Current value</dt><dd>{selectedField.value || "Not provided"}</dd><dt>Evidence</dt><dd>{selectedEvidence?.name ?? "No authoritative evidence mapped"}</dd>{selectedFact && <><dt>Evidence value</dt><dd>{selectedFact.value}</dd></>}<dt>Decision rule</dt><dd>{selectedField.status === "verified" ? "Current value matches acceptable mapped evidence." : selectedField.status === "blocked" ? "A deterministic conflict or evidence-validity rule failed." : selectedField.status === "needs_confirmation" ? "The evidence set cannot independently establish this value." : "A required value has not been provided."}</dd></dl>{selectedField.issue && <p className={`trust-explanation ${selectedField.status}`}>{selectedField.issue}</p>}</div></section>}
+            {selectedField && <section className="trust-inspector" aria-live="polite"><div className="trust-inspector-heading"><div><span className="step-kicker">Why this status?</span><h4>{selectedField.label}</h4></div><button type="button" onClick={() => setSelectedFieldId("")} aria-label="Close field explanation">×</button></div><div className="trust-inspector-body"><div className="trust-state"><span className={`trust-state-dot ${selectedField.status}`} /><strong>{statusLabel(selectedField.status)}</strong></div><dl><dt>Current value</dt><dd>{selectedField.value || "Not provided"}</dd><dt>Source</dt><dd>{selectedEvidence ? <a href={selectedEvidence.sourceUrl} target="_blank" rel="noreferrer">{selectedEvidence.name} ↗</a> : "No authoritative evidence mapped"}</dd>{selectedFact && <><dt>Evidence fact</dt><dd>{selectedFact.fieldId} = {selectedFact.value}</dd></>}<dt>Evidence validity</dt><dd>{selectedEvidenceValidity}</dd><dt>Decision rule</dt><dd>{selectedField.status === "verified" ? "Current value matches current, acceptable mapped evidence." : selectedField.status === "blocked" ? "A deterministic conflict or evidence-validity rule failed." : selectedField.status === "needs_confirmation" ? "The evidence set cannot independently establish this value." : "A required value has not been provided."}</dd><dt>Result</dt><dd><strong>{statusLabel(selectedField.status)}</strong></dd></dl>{selectedField.issue && <p className={`trust-explanation ${selectedField.status}`}>{selectedField.issue}</p>}</div></section>}
 
+            <div className="evidence-disclosure"><strong>5 fictional source documents</strong><span>Demo evidence is pre-extracted for deterministic verification. Open the PDFs to inspect the underlying fictional source records; arbitrary PDF ingestion/OCR is outside this MVP.</span></div>
             <p className="panel-intro">Select a document to see the fields it supports. A source can be present and still be rejected when a validity rule fails.</p>
             <div className="document-list">{evidenceDocuments.map((document) => {
               const facts = evidenceFacts.filter((fact) => fact.evidenceId === document.id);
-              return <article key={document.id} className={`document-card ${document.status} ${selectedEvidence?.id === document.id ? "selected" : ""}`}><button type="button" className="document-link-button" onClick={() => setSelectedEvidenceId(document.id)}><div className="document-icon" aria-hidden="true">PDF</div><div className="document-copy"><strong>{document.name}</strong><span>{document.kind}</span><small>{document.reference}</small><p>{document.note}</p>{facts.length > 0 && <div className="document-facts">Supports {facts.length} field{facts.length === 1 ? "" : "s"}: {facts.map((fact) => fields.find((field) => field.id === fact.fieldId)?.label ?? fact.fieldId).join(", ")}</div>}</div><span className={`document-state ${document.status}`}>{document.status === "accepted" ? "Ready" : "Attention"}</span></button></article>;
+              return <article key={document.id} className={`document-card ${document.status} ${selectedEvidence?.id === document.id ? "selected" : ""}`}><button type="button" className="document-link-button" onClick={() => setSelectedEvidenceId(document.id)}><div className="document-icon" aria-hidden="true">PDF</div><div className="document-copy"><strong>{document.name}</strong><span>{document.kind}</span><small>{document.reference}</small><p>{document.note}</p>{facts.length > 0 && <div className="document-facts">Supports {facts.length} field{facts.length === 1 ? "" : "s"}: {facts.map((fact) => fields.find((field) => field.id === fact.fieldId)?.label ?? fact.fieldId).join(", ")}</div>}</div><span className={`document-state ${document.status}`}>{document.status === "accepted" ? "Ready" : "Attention"}</span></button><a className="document-source-link" href={document.sourceUrl} target="_blank" rel="noreferrer">Open source PDF ↗</a></article>;
             })}</div>
 
             <div className="legend-card"><h4>Field status</h4><ul><li><span className="legend-dot verified" />Verified from acceptable evidence</li><li><span className="legend-dot confirmation" />Needs applicant confirmation</li><li><span className="legend-dot blocked" />Conflict or invalid evidence</li></ul></div>
 
-            <div className="history-card"><h4>Who changed what</h4>{history.length === 0 ? <p>No edits in this session.</p> : history.slice(-5).reverse().map((record) => { const field = fields.find((item) => item.id === record.fieldId); return <div key={record.id} className={record.origin === "agent" ? "agent-change" : ""}><strong>{field?.label ?? record.fieldId}<span className={`history-origin ${record.origin}`}>{record.origin === "agent" ? "WebMCP agent" : "Human"}</span></strong><span>{record.previousValue || "blank"} → {record.nextValue || "blank"}</span></div>; })}</div>
+            <div className="history-card"><h4>Who changed what</h4>{history.length === 0 ? <p>No edits in this session.</p> : history.slice(-6).reverse().map((record) => { const field = fields.find((item) => item.id === record.fieldId); const sourceUrl = sourceUrlForName(field?.source); return <div key={record.id} className={record.origin === "agent" ? "agent-change" : ""}><strong>{field?.label ?? record.fieldId}<span className={`history-origin ${record.origin}`}>{record.origin === "agent" ? "Agent via WebMCP" : "Applicant"}</span></strong><span>{record.previousValue || "blank"} → {record.nextValue || "blank"}</span>{field?.status === "verified" && field.source && <small>Verified from {sourceUrl ? <a href={sourceUrl} target="_blank" rel="noreferrer">{field.source} ↗</a> : field.source}</small>}</div>; })}</div>
           </aside>
         </div>
+
+        <section className="expansion-strip" aria-label="Where this trust model applies"><span className="step-kicker">Beyond scholarships</span><h3>One trust model for consequential forms</h3><div><span>Insurance claims</span><span>Visa applications</span><span>Public benefits</span><span>Financial aid</span><span>Compliance workflows</span><span>Vendor onboarding</span></div></section>
       </main>
 
       <footer className="gov-footer"><div><strong>webclerk prototype</strong><span>Built for the OpenAI WebMCP Challenge · Fictional interface only</span></div><div><span>Accessibility</span><span>Privacy</span><span>Terms</span><span>Help</span></div></footer>
