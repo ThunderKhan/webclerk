@@ -1,0 +1,44 @@
+.header-actions { display: flex; gap: .6rem; flex-wrap: wrap; justify-content: flex-end; }
+
+.preflight-card {
+  background: #fff;
+  border: 1px solid #d8dde3;
+  border-left: 5px solid #17365d;
+  padding: 16px 18px;
+  margin-bottom: 18px;
+  box-shadow: 0 1px 2px rgba(16,24,40,.03);
+}
+.preflight-heading { display: flex; justify-content: space-between; gap: 1.2rem; align-items: flex-start; }
+.preflight-heading h3 { margin: .25rem 0 0; color: #172f4f; font-size: 1.05rem; }
+.preflight-counts { color: #5e6872; font-size: .8rem; white-space: nowrap; }
+.preflight-counts strong { color: #172f4f; }
+.preflight-card > p { margin: .75rem 0 0; color: #52606d; font-size: .84rem; }
+.preflight-issues { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin-top: 13px; }
+.preflight-issue {
+  text-align: left;
+  border: 1px solid #d8dde3;
+  border-left-width: 4px;
+  background: #fff;
+  padding: .7rem .8rem;
+  color: #344454;
+}
+.preflight-issue.critical { border-left-color: #a33a2c; background: #fffafa; }
+.preflight-issue.warning { border-left-color: #c88816; background: #fffdf8; }
+.preflight-issue strong { display: block; font-size: .76rem; margin-bottom: .25rem; }
+.preflight-issue span { display: block; font-size: .7rem; line-height: 1.4; color: #66727d; }
+.preflight-issue:hover, .preflight-issue:focus-visible { outline: 2px solid #21568c; outline-offset: 1px; }
+
+.history-card { margin: 0 14px 14px; padding: 12px; border: 1px solid #e0e5ea; background: #fff; }
+.history-card h4 { margin: 0 0 .55rem; font-size: .8rem; color: #314252; }
+.history-card p { margin: 0; color: #6b7681; font-size: .72rem; }
+.history-card div { border-top: 1px solid #edf0f2; padding: .55rem 0; }
+.history-card div:first-of-type { border-top: 0; }
+.history-card strong, .history-card span { display: block; }
+.history-card strong { color: #344454; font-size: .72rem; }
+.history-card span { color: #6b7681; font-size: .68rem; margin-top: .15rem; overflow-wrap: anywhere; }
+
+@media (max-width: 760px) {
+  .preflight-heading { flex-direction: column; }
+  .preflight-issues { grid-template-columns: 1fr; }
+  .header-actions { width: 100%; justify-content: flex-start; }
+}
