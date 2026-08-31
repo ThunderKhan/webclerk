@@ -21,7 +21,8 @@ Open the live app in a WebMCP-capable environment and use these prompts in order
 
 Expected behavior:
 
-- the agent fills only current, evidence-backed fields;
+- the agent uses `apply_verified_fields` to fill the six current, evidence-backed blanks through WebMCP;
+- those edits are visibly attributed to the WebMCP agent;
 - `mode of study` remains unresolved because the enrollment certificate does not explicitly state it;
 - the form preserves the ₹3,50,000 application value while surfacing the ₹3,20,000 evidence conflict;
 - the income certificate remains blocked because it is outside the accepted 12-month validity window;
@@ -31,7 +32,7 @@ Expected behavior:
 
 ## Why WebMCP
 
-webclerk is not using WebMCP as a wrapper around a normal chatbot feature. The page itself exposes semantic capabilities such as `list_evidence`, `inspect_field`, `suggest_field_value`, `set_field_value`, and `run_preflight` through `document.modelContext.registerTool(...)`.
+webclerk is not using WebMCP as a wrapper around a normal chatbot feature. The page itself exposes semantic capabilities such as `list_evidence`, `apply_verified_fields`, `inspect_field`, `set_field_value`, and `run_preflight` through `document.modelContext.registerTool(...)`.
 
 That means an external agent can work with **application concepts directly** instead of relying on brittle DOM scraping, screen coordinates, or a one-off integration. Human and agent operate over the same browser-visible state, and every agent mutation goes back through the page's deterministic evidence rules.
 
@@ -69,18 +70,38 @@ Most autofill systems optimize for completion. webclerk optimizes for **justifie
 
 ## WebMCP tools
 
-webclerk exposes exactly eight semantic tools:
+webclerk exposes exactly nine semantic tools:
 
 - `get_application_state`
 - `inspect_field`
 - `list_evidence`
 - `suggest_field_value`
 - `set_field_value`
+- `apply_verified_fields`
 - `find_missing_information`
 - `check_consistency`
 - `run_preflight`
 
 There is deliberately **no** `submit_application` tool.
+
+### Bulk verified preparation
+
+`apply_verified_fields` is the semantic capability for the natural user intent:
+
+> Fill everything you can verify from my documents. Don't guess anything.
+
+It applies only incomplete fields with current, acceptable mapped evidence. It skips:
+
+- already completed fields;
+- confirmation-only fields;
+- stale evidence;
+- unresolved conflicts;
+- the applicant declaration;
+- anything without acceptable evidence.
+
+Because the writes go through webclerk's agent bridge, they are recorded as WebMCP-agent changes and remain reversible.
+
+### Human authority boundary
 
 `set_field_value` rejects attempts to complete the applicant declaration with:
 
@@ -88,14 +109,19 @@ There is deliberately **no** `submit_application` tool.
 HUMAN_ACTION_REQUIRED
 ```
 
-The tool surface also communicates a recommended preparation flow:
+The recommended preparation flow is:
 
 ```text
 list_evidence
-  → find_missing_information
-  → suggest_field_value
-  → set_field_value
+  → apply_verified_fields
   → run_preflight
+```
+
+For a granular one-field edit:
+
+```text
+suggest_field_value
+  → set_field_value
 ```
 
 ## Architecture
@@ -192,7 +218,7 @@ The prototype has been exercised in:
 
 Validated behavior includes:
 
-- exact discovery of all eight tools;
+- discovery of the semantic tool surface;
 - state reads;
 - evidence-backed shared-state mutation;
 - visible agent attribution;
@@ -202,6 +228,8 @@ Validated behavior includes:
 - deterministic preflight;
 - declaration rejection with `HUMAN_ACTION_REQUIRED` at the WebMCP boundary;
 - no autonomous submit tool.
+
+The nine-tool bulk-fill version must still pass the final production rehearsal before submission.
 
 ## Run locally
 
@@ -240,6 +268,7 @@ WebMCP itself requires a supported browser/agent environment. In an ordinary bro
 - [x] Trust UX and provenance
 - [x] Real-browser WebMCP verification
 - [x] Natural-language agent rehearsal
+- [ ] Final nine-tool production rehearsal
 - [ ] Three consecutive clean final runs
 - [ ] Demo video and submission
 
