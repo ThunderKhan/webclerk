@@ -21,7 +21,8 @@ Open the live app in a WebMCP-capable environment and use these prompts in order
 
 Expected behavior:
 
-- the agent uses `apply_verified_fields` to fill the six current, evidence-backed blanks through WebMCP;
+- `get_application_state` reports six safe evidence-backed edits and recommends `fill_verified_fields_from_evidence`;
+- the agent uses `fill_verified_fields_from_evidence` to fill those six blanks through WebMCP;
 - those edits are visibly attributed to the WebMCP agent;
 - `mode of study` remains unresolved because the enrollment certificate does not explicitly state it;
 - the form preserves the ₹3,50,000 application value while surfacing the ₹3,20,000 evidence conflict;
@@ -32,7 +33,7 @@ Expected behavior:
 
 ## Why WebMCP
 
-webclerk is not using WebMCP as a wrapper around a normal chatbot feature. The page itself exposes semantic capabilities such as `list_evidence`, `apply_verified_fields`, `inspect_field`, `set_field_value`, and `run_preflight` through `document.modelContext.registerTool(...)`.
+webclerk is not using WebMCP as a wrapper around a normal chatbot feature. The page itself exposes semantic capabilities such as `get_application_state`, `fill_verified_fields_from_evidence`, `list_evidence`, `inspect_field`, and `run_preflight` through `document.modelContext.registerTool(...)`.
 
 That means an external agent can work with **application concepts directly** instead of relying on brittle DOM scraping, screen coordinates, or a one-off integration. Human and agent operate over the same browser-visible state, and every agent mutation goes back through the page's deterministic evidence rules.
 
@@ -73,11 +74,11 @@ Most autofill systems optimize for completion. webclerk optimizes for **justifie
 webclerk exposes exactly nine semantic tools:
 
 - `get_application_state`
+- `fill_verified_fields_from_evidence`
 - `inspect_field`
 - `list_evidence`
 - `suggest_field_value`
 - `set_field_value`
-- `apply_verified_fields`
 - `find_missing_information`
 - `check_consistency`
 - `run_preflight`
@@ -86,11 +87,23 @@ There is deliberately **no** `submit_application` tool.
 
 ### Bulk verified preparation
 
-`apply_verified_fields` is the semantic capability for the natural user intent:
+`fill_verified_fields_from_evidence` is the preferred semantic capability for the natural user intent:
 
 > Fill everything you can verify from my documents. Don't guess anything.
 
-It applies only incomplete fields with current, acceptable mapped evidence. It skips:
+`get_application_state` makes the intent routing explicit by returning:
+
+- `safeEvidenceBackedEditsAvailable`;
+- `safeEvidenceBackedFieldIds`;
+- `recommendedNextAction`.
+
+At the reset state those values are six safe edits and:
+
+```text
+recommendedNextAction = fill_verified_fields_from_evidence
+```
+
+The bulk tool applies only incomplete fields with current, acceptable mapped evidence. It skips:
 
 - already completed fields;
 - confirmation-only fields;
@@ -101,6 +114,8 @@ It applies only incomplete fields with current, acceptable mapped evidence. It s
 
 Because the writes go through webclerk's agent bridge, they are recorded as WebMCP-agent changes and remain reversible.
 
+`set_field_value` and `suggest_field_value` remain available for one-field follow-ups, but are explicitly not the preferred path for bulk preparation.
+
 ### Human authority boundary
 
 `set_field_value` rejects attempts to complete the applicant declaration with:
@@ -109,11 +124,11 @@ Because the writes go through webclerk's agent bridge, they are recorded as WebM
 HUMAN_ACTION_REQUIRED
 ```
 
-The recommended preparation flow is:
+The preferred preparation flow is:
 
 ```text
-list_evidence
-  → apply_verified_fields
+get_application_state
+  → fill_verified_fields_from_evidence
   → run_preflight
 ```
 
@@ -229,7 +244,7 @@ Validated behavior includes:
 - declaration rejection with `HUMAN_ACTION_REQUIRED` at the WebMCP boundary;
 - no autonomous submit tool.
 
-The nine-tool bulk-fill version must still pass the final production rehearsal before submission.
+The explicit bulk-intent version must still pass the final production rehearsal before submission.
 
 ## Run locally
 
@@ -268,7 +283,7 @@ WebMCP itself requires a supported browser/agent environment. In an ordinary bro
 - [x] Trust UX and provenance
 - [x] Real-browser WebMCP verification
 - [x] Natural-language agent rehearsal
-- [ ] Final nine-tool production rehearsal
+- [ ] Final explicit bulk-intent production rehearsal
 - [ ] Three consecutive clean final runs
 - [ ] Demo video and submission
 
