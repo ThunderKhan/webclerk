@@ -25,13 +25,14 @@ afterEach(() => {
 });
 
 describe("WebMCP tool adapter", () => {
-  it("exposes the intended eight semantic tools", () => {
+  it("exposes the intended nine semantic tools", () => {
     const tools = createWebMcpTools(makeBridge());
     expect(tools.map((tool) => tool.name)).toEqual([...WEBMCP_TOOL_NAMES]);
     expect(tools.some((tool) => tool.name === "submit_application")).toBe(false);
+    expect(tools.some((tool) => tool.name === "apply_verified_fields")).toBe(true);
   });
 
-  it("returns application state with recommended orchestration and human authority boundaries", async () => {
+  it("returns application state with bulk-fill orchestration and human authority boundaries", async () => {
     const tool = createWebMcpTools(makeBridge()).find((item) => item.name === "get_application_state")!;
     const payload = parseToolResult(await tool.execute({}));
     expect(payload.ok).toBe(true);
@@ -39,9 +40,7 @@ describe("WebMCP tool adapter", () => {
     expect(payload.preflight).toMatchObject({ ready: false });
     expect(payload.recommendedFlow).toEqual([
       "list_evidence",
-      "find_missing_information",
-      "suggest_field_value",
-      "set_field_value",
+      "apply_verified_fields",
       "run_preflight",
     ]);
     expect(payload.humanAuthority).toMatchObject({
@@ -85,7 +84,54 @@ describe("WebMCP tool adapter", () => {
     expect(payload.code).toBe("NO_VERIFIABLE_SUGGESTION");
   });
 
-  it("allows a normal agent mutation through the shared bridge", async () => {
+  it("applies all incomplete evidence-backed fields through the shared agent bridge", async () => {
+    let raw = initialFields.map((field) => ({ ...field }));
+    const mutation = vi.fn((fieldId: string, value: string) => {
+      raw = raw.map((field) => field.id === fieldId ? { ...field, value } : field);
+      const field = deriveFields(raw, evidenceDocuments).find((item) => item.id === fieldId);
+      return { ok: true, field, message: "updated" };
+    });
+    const bridge: WebMcpBridge = {
+      getFields: () => deriveFields(raw, evidenceDocuments),
+      setFieldFromAgent: mutation,
+    };
+    const tool = createWebMcpTools(bridge).find((item) => item.name === "apply_verified_fields")!;
+    const payload = parseToolResult(await tool.execute({}));
+    const applied = payload.applied as Array<{ fieldId: string }>;
+
+    expect(payload.ok).toBe(true);
+    expect(payload.appliedCount).toBe(6);
+    expect(applied.map((item) => item.fieldId)).toEqual([
+      "programme",
+      "year",
+      "enrollment",
+      "previous_score",
+      "domicile_state",
+      "domicile_cert",
+    ]);
+    expect(mutation).toHaveBeenCalledTimes(6);
+    expect(mutation).not.toHaveBeenCalledWith("family_income", "320000");
+    expect(mutation).not.toHaveBeenCalledWith("declaration", expect.anything());
+    expect(payload.policy).toMatchObject({
+      unsupportedGuesses: 0,
+      declaration: "human_only",
+      submission: "not_exposed_as_a_webmcp_tool",
+    });
+  });
+
+  it("does not reapply already completed evidence-backed fields", async () => {
+    const bridge = makeBridge();
+    const mutation = vi.fn(bridge.setFieldFromAgent);
+    bridge.setFieldFromAgent = mutation;
+    const tool = createWebMcpTools(bridge).find((item) => item.name === "apply_verified_fields")!;
+    const payload = parseToolResult(await tool.execute({}));
+    expect(payload.appliedCount).toBe(6);
+    expect(mutation).not.toHaveBeenCalledWith("full_name", "Ayan Khan");
+    expect(mutation).not.toHaveBeenCalledWith("dob", "2006-04-12");
+    expect(mutation).not.toHaveBeenCalledWith("institution", "Deen Dayal Upadhyaya Gorakhpur University");
+  });
+
+  it("allows a normal granular agent mutation through the shared bridge", async () => {
     const mutation = vi.fn(() => ({ ok: true, message: "updated" }));
     const bridge = makeBridge();
     bridge.setFieldFromAgent = mutation;
