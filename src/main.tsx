@@ -1,7 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
-import { enableEvidenceDocumentLinks } from "./evidence-links";
 import "./styles.css";
 import "./domain.css";
 import "./trust.css";
@@ -12,5 +11,3 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <App />
   </React.StrictMode>,
 );
-
-enableEvidenceDocumentLinks();
