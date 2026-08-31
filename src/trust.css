@@ -1,0 +1,51 @@
+.trust-strip { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:0 0 18px; }
+.trust-pillar { background:#fff; border:1px solid #d8dde3; border-top:3px solid #17365d; padding:12px 14px; }
+.trust-pillar strong { display:block; color:#18365f; font-size:.82rem; margin-bottom:.25rem; }
+.trust-pillar span { color:#66727d; font-size:.72rem; line-height:1.4; }
+
+.field-shell { position:relative; }
+.field-inspect-button { margin-top:.45rem; border:0; background:transparent; color:#1d568c; text-decoration:underline; font-size:.7rem; padding:0; }
+.field-inspect-button:hover,.field-inspect-button:focus-visible { color:#0f2948; outline:2px solid #21568c; outline-offset:2px; }
+.agent-touched { background:linear-gradient(90deg,#eef5ff 0,#fff 34%); box-shadow:inset 0 0 0 1px #9ab9dc; }
+.agent-ribbon { display:inline-flex; align-items:center; gap:.3rem; margin-top:.38rem; color:#164a7a; font-size:.66rem; font-weight:700; }
+.agent-ribbon::before { content:"AI"; display:grid; place-items:center; width:22px; height:18px; border-radius:3px; background:#17365d; color:#fff; font-size:.58rem; }
+
+.trust-inspector { margin:0 14px 14px; border:1px solid #cfd8e2; background:#fff; }
+.trust-inspector-heading { padding:11px 12px; border-bottom:1px solid #e2e6ea; background:#f6f8fa; display:flex; justify-content:space-between; gap:.8rem; align-items:flex-start; }
+.trust-inspector-heading h4 { margin:.15rem 0 0; color:#243b53; font-size:.84rem; }
+.trust-inspector-heading button { border:0; background:transparent; color:#5d6872; font-size:1rem; }
+.trust-inspector-body { padding:12px; }
+.trust-state { display:flex; align-items:center; gap:.45rem; margin-bottom:.7rem; }
+.trust-state strong { font-size:.75rem; color:#344454; }
+.trust-state-dot { width:10px; height:10px; border-radius:50%; }
+.trust-state-dot.verified { background:#2b6f48; }
+.trust-state-dot.needs_confirmation { background:#c88816; }
+.trust-state-dot.blocked { background:#a33a2c; }
+.trust-state-dot.empty { background:#87919b; }
+.trust-inspector dl { margin:0; display:grid; grid-template-columns:92px 1fr; gap:.5rem .65rem; }
+.trust-inspector dt { color:#6b7681; font-size:.67rem; }
+.trust-inspector dd { margin:0; color:#344454; font-size:.7rem; line-height:1.42; overflow-wrap:anywhere; }
+.trust-explanation { margin:.8rem 0 0; padding:.65rem .7rem; background:#f7f9fb; border-left:3px solid #597a9a; color:#52606d; font-size:.7rem; line-height:1.45; }
+.trust-explanation.blocked { border-left-color:#a33a2c; background:#fff8f7; }
+.trust-explanation.needs_confirmation { border-left-color:#c88816; background:#fffdf7; }
+
+.document-card.selected { outline:2px solid #21568c; outline-offset:1px; }
+.document-link-button { border:0; background:transparent; padding:0; text-align:left; color:inherit; width:100%; cursor:pointer; }
+.document-facts { margin-top:.45rem; padding-top:.45rem; border-top:1px dashed #d8dde3; color:#52606d; font-size:.68rem; line-height:1.4; }
+
+.review-gate { margin-bottom:18px; background:#fff; border:1px solid #d8dde3; border-left:5px solid #17365d; padding:14px 16px; display:grid; grid-template-columns:1fr auto; gap:1rem; align-items:center; }
+.review-gate.ready { border-left-color:#2b6f48; }
+.review-gate.blocked { border-left-color:#a33a2c; }
+.review-gate h3 { margin:.2rem 0 .3rem; font-size:1rem; color:#23384f; }
+.review-gate p { margin:0; color:#63707b; font-size:.76rem; line-height:1.45; }
+.review-gate .gate-badge { min-width:150px; text-align:center; padding:.6rem .8rem; font-size:.7rem; font-weight:800; border:1px solid #cfd6de; background:#f7f9fb; color:#344454; }
+.review-gate.ready .gate-badge { background:#e9f5ee; color:#24613e; border-color:#bfd8c9; }
+.review-gate.blocked .gate-badge { background:#fff0ee; color:#8b2822; border-color:#e6c4bf; }
+.human-only-note { margin-top:.45rem; color:#7a4d00; font-size:.7rem; font-weight:700; }
+
+.history-card div.agent-change { background:#f1f6fc; margin:0 -.35rem; padding:.55rem .35rem; border-left:3px solid #21568c; }
+.history-origin { display:inline-block; margin-left:.35rem; padding:.08rem .28rem; border-radius:2px; font-size:.58rem; font-weight:800; text-transform:uppercase; letter-spacing:.04em; }
+.history-origin.agent { background:#e6eef8; color:#174a78; }
+.history-origin.human { background:#eef1f3; color:#52606d; }
+
+@media (max-width:900px){ .trust-strip{grid-template-columns:1fr;} .review-gate{grid-template-columns:1fr;} .review-gate .gate-badge{justify-self:start;} }

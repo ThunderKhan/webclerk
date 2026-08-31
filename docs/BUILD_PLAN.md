@@ -27,13 +27,9 @@ Build:
 - [x] realistic Indian public-service visual language informed by UX4G/GIGW;
 - [x] conspicuous fictional-demo/non-affiliation labeling.
 
-No agent required yet.
-
 Exit condition: the full scenario is understandable and manually usable from the UI. **Complete.**
 
 ## Milestone 2 — Domain logic
-
-Implement/test:
 
 - [x] application state access;
 - [x] field inspection;
@@ -43,21 +39,14 @@ Implement/test:
 - [x] change history + undo;
 - [x] missing-information detection;
 - [x] consistency checks;
-- [x] preflight aggregation.
-
-Required deterministic checks:
-
+- [x] preflight aggregation;
 - [x] ₹350,000 vs ₹320,000 income conflict;
 - [x] stale income certificate;
 - [x] ambiguous field remains `needs_confirmation`.
 
-The domain engine is intentionally independent from both React and WebMCP. Seed data describes application values and evidence; trust state is derived at runtime from deterministic rules. Vitest coverage locks the required demo invariants, and CI runs both tests and the production build.
-
 Exit condition: all core behavior works without an LLM or WebMCP. **Complete.**
 
 ## Milestone 3 — WebMCP
-
-Register the MVP tool surface using `document.modelContext`:
 
 - [x] `get_application_state`
 - [x] `inspect_field`
@@ -67,33 +56,29 @@ Register the MVP tool surface using `document.modelContext`:
 - [x] `find_missing_information`
 - [x] `check_consistency`
 - [x] `run_preflight`
+- [x] feature detection and graceful fallback;
+- [x] shared domain rules;
+- [x] visible agent-originated changes;
+- [x] human-only declaration;
+- [x] adapter tests.
 
-Requirements:
-
-- [x] feature detection;
-- [x] registration failure does not break UI;
-- [x] precise JSON schemas;
-- [x] same domain functions as human UI;
-- [x] visible agent-originated change records;
-- [x] human-only final declaration;
-- [x] tool adapter tests.
-
-The WebMCP layer is a thin adapter over the deterministic engine. Agent writes update the same React state the citizen sees, are marked `agent` in session history, and are immediately re-evaluated by evidence rules. Unsupported browsers keep the normal human workflow intact.
-
-Exit condition: the implemented tool surface can support the required demo intents through actual WebMCP calls. **Complete pending supported-browser end-to-end rehearsal in Milestone 5.**
+Exit condition: the implemented tool surface supports the demo intents through actual WebMCP calls. **Complete pending supported-browser end-to-end rehearsal in Milestone 5.**
 
 ## Milestone 4 — Trust UX
 
-Polish the core differentiators:
+- [x] clear verified / confirmation / blocked states;
+- [x] per-field “Why this status?” inspection;
+- [x] evidence provenance and evidence-value display;
+- [x] conflict and stale-evidence explanation;
+- [x] visible WebMCP-agent field highlighting;
+- [x] human-vs-agent change history;
+- [x] evidence-to-field mapping;
+- [x] final review gate;
+- [x] explicit human-only declaration/submission boundary.
 
-- clear verified / confirmation / blocked states;
-- provenance inspection;
-- conflict presentation;
-- stale-evidence presentation;
-- agent-change review/undo;
-- final human-review state.
+The UI now makes the trust model visible without requiring a judge to read the agent transcript: evidence is inspectable, uncertainty remains explicit, agent edits are visually attributable, and the final review gate states whether submission is blocked or merely prepared for a human decision.
 
-Exit condition: judge can understand trust/uncertainty behavior without reading chat logs.
+Exit condition: judge can understand trust/uncertainty behavior without reading chat logs. **Complete.**
 
 ## Milestone 5 — Demo hardening
 
