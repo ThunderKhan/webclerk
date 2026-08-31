@@ -41,15 +41,7 @@ For the current WebMCP draft, tools are registered through `document.modelContex
 
 **Input:** none.
 
-**Returns:**
-
-- application id/title;
-- completion summary;
-- field-state counts;
-- section summaries;
-- blocker/warning counts;
-- whether evidence is available;
-- whether preflight has been run.
+**Returns:** application metadata, completion summary, field-state counts, section summaries, evidence availability, recommended tool flow, and human-authority boundaries.
 
 **Read-only.**
 
@@ -62,19 +54,10 @@ For the current WebMCP draft, tools are registered through `document.modelContex
 **Input:**
 
 ```json
-{ "fieldId": "annual_family_income" }
+{ "fieldId": "family_income" }
 ```
 
-**Returns:**
-
-- label and description;
-- required status;
-- current value;
-- semantic status;
-- requirements/rules;
-- supporting evidence;
-- conflicts/findings;
-- whether agent mutation is currently allowed.
+**Returns:** current value, semantic status, supporting evidence, evidence value, evidence validity, whether it is acceptable for verification, and the deterministic reason for the current state.
 
 **Read-only.**
 
@@ -82,11 +65,11 @@ For the current WebMCP draft, tools are registered through `document.modelContex
 
 ### `list_evidence`
 
-**Purpose:** Discover the documents/facts available to support answers.
+**Purpose:** Discover the supporting documents and pre-extracted facts available to support answers.
 
 **Input:** optional document kind/filter.
 
-**Returns:** document metadata and structured facts, including issue date where relevant.
+**Returns:** document metadata, source PDF URL, structured facts, validity, and `acceptableForVerification`.
 
 **Read-only.**
 
@@ -94,27 +77,11 @@ For the current WebMCP draft, tools are registered through `document.modelContex
 
 ### `suggest_field_value`
 
-**Purpose:** Ask the application domain layer for an evidence-backed candidate for a field.
+**Purpose:** Ask the application domain layer for an evidence-backed candidate for one field.
 
 **Input:** field id.
 
-**Returns:**
-
-```json
-{
-  "fieldId": "institution",
-  "suggestedValue": "Deen Dayal Upadhyaya Gorakhpur University",
-  "status": "verified",
-  "provenance": [
-    {
-      "documentId": "enrollment-certificate",
-      "factKey": "institution"
-    }
-  ]
-}
-```
-
-If the system cannot support a value, it returns an explicit reason rather than guessing.
+If the system cannot support a value with current acceptable evidence, it returns an explicit reason rather than guessing.
 
 **Read-only with respect to form state.**
 
@@ -122,32 +89,59 @@ If the system cannot support a value, it returns an explicit reason rather than 
 
 ### `set_field_value`
 
-**Purpose:** Apply a value to a field through normal domain logic.
-
-**Input:**
-
-- field id;
-- proposed value;
-- provenance reference(s) when evidence-backed;
-- intended status (`verified` or `needs_confirmation`) subject to domain validation.
+**Purpose:** Apply one reversible, non-consequential value through normal domain logic.
 
 **Behavior:**
 
 - reject invalid field ids;
-- reject impossible status transitions;
 - preserve previous value for undo;
 - create an agent-authored change record;
-- never mark unsupported values verified.
+- re-derive the field state from evidence and deterministic rules;
+- never mark unsupported values verified;
+- reject the applicant declaration with `HUMAN_ACTION_REQUIRED`.
 
 **Mutating.**
 
 ---
 
+### `apply_verified_fields`
+
+**Purpose:** Represent the bulk user intent “fill everything you can verify from my documents without guessing” as one semantic WebMCP capability.
+
+**Input:** none.
+
+**Behavior:**
+
+- inspect all currently incomplete fields;
+- apply only values backed by current, acceptable mapped evidence;
+- use the same agent mutation bridge as `set_field_value` so every write is attributed to the WebMCP agent and remains reversible;
+- skip already-completed fields;
+- skip confirmation-only fields;
+- skip stale evidence;
+- skip unresolved conflicts;
+- skip the applicant declaration;
+- never submit the application.
+
+For the seeded demo, it should apply exactly six fields:
+
+```text
+programme
+year
+enrollment
+previous_score
+domicile_state
+domicile_cert
+```
+
+**Mutating, but constrained to evidence-backed preparation.**
+
+---
+
 ### `find_missing_information`
 
-**Purpose:** Tell the agent what prevents the application from being complete/review-ready.
+**Purpose:** Tell the agent what prevents the application from being complete or review-ready.
 
-**Returns:** unresolved required fields, missing evidence, blocked requirements, and confirmation requests grouped by priority.
+**Returns:** unresolved required fields, blocked requirements, and confirmation requests.
 
 **Read-only.**
 
@@ -155,7 +149,7 @@ If the system cannot support a value, it returns an explicit reason rather than 
 
 ### `check_consistency`
 
-**Purpose:** Compare related form values and supporting evidence.
+**Purpose:** Compare current form values and supporting evidence.
 
 Must detect the seeded MVP case:
 
@@ -174,27 +168,11 @@ Expected result: explicit conflict; no automatic resolution.
 
 **Purpose:** Run all relevant validation before the human reviews/submits.
 
-**Returns:**
-
-- readiness state;
-- blockers;
-- warnings;
-- unresolved confirmations;
-- stale evidence;
-- consistency conflicts;
-- verification counts.
+**Returns:** readiness state, blockers, warnings, unresolved confirmations, stale evidence, consistency conflicts, and human-authority boundaries.
 
 Must detect the seeded stale income certificate requirement.
 
 **Read-only with respect to user-entered field values.** It may store/display the latest preflight result.
-
----
-
-### `prepare_submission` (stretch)
-
-**Purpose:** Freeze or present a review snapshot after successful preflight.
-
-It may organize the final review state but **must not submit** the application externally.
 
 ---
 
@@ -210,9 +188,32 @@ This is an explicit product and safety decision, not an unfinished feature.
 
 The agent can prepare; the human commits.
 
+## Preferred orchestration
+
+For a natural bulk request such as:
+
+> Fill everything you can verify from my documents. Don't guess anything.
+
+prefer:
+
+```text
+list_evidence
+  → apply_verified_fields
+  → run_preflight
+```
+
+For a granular one-field task:
+
+```text
+suggest_field_value
+  → set_field_value
+```
+
+`apply_verified_fields` exists because the bulk user intent is a first-class application capability. It is more reliable and semantically clearer than asking an agent to click six controls or orchestrate a dozen granular calls.
+
 ## Registration pattern
 
-The implementation should use the current browser-side producer API:
+The implementation uses the browser-side producer API:
 
 ```ts
 const controller = new AbortController();
@@ -221,7 +222,7 @@ await document.modelContext.registerTool(
   {
     name: "inspect_field",
     description:
-      "Inspect one field in the current application, including its value, requirements, status, validation issues, and supporting evidence.",
+      "Inspect one field in the current application, including its value, status, validation issues, and supporting evidence.",
     inputSchema: {
       type: "object",
       properties: {
@@ -239,18 +240,19 @@ await document.modelContext.registerTool(
   },
   { signal: controller.signal }
 );
-
-// controller.abort() unregisters this registration lifecycle.
 ```
+
+`controller.abort()` ends the registration lifecycle.
 
 ## Tool naming
 
-Prefer clear snake_case verbs/nouns that state one capability:
+Prefer clear snake_case names that state a concrete capability:
 
 ```text
 get_application_state
 inspect_field
 list_evidence
+apply_verified_fields
 check_consistency
 run_preflight
 ```
@@ -264,66 +266,27 @@ handle_form
 do_everything
 ```
 
-## Tool descriptions matter
-
-Descriptions should tell the agent **when** to use the tool, not simply repeat the name.
-
-Bad:
-
-> Inspect field.
-
-Better:
-
-> Inspect one application field when you need its current value, meaning, requirements, validation state, or supporting evidence before explaining or modifying it.
+`apply_verified_fields` is intentionally specific: it does not “complete the form.” It only applies values that the deterministic evidence engine can verify.
 
 ## Safe mutation model
 
-For a field to become `verified`, one of these must hold:
+For a field to become `verified`, accepted current evidence must directly support the value and all relevant evidence rules must pass. Agent confidence alone is never sufficient.
 
-1. accepted evidence directly supports the value and all relevant evidence rules pass; or
-2. the product rule explicitly permits user confirmation and the human has confirmed the value.
-
-An agent confidence score by itself is never sufficient.
-
-## Dynamic registration
-
-Dynamic tools are a stretch feature.
-
-Potential progression:
-
-```text
-Initial
-  get_application_state
-  inspect_field
-  list_evidence
-
-Evidence loaded
-  suggest_field_value
-  set_field_value
-  check_consistency
-
-Review stage
-  find_missing_information
-  run_preflight
-  prepare_submission
-```
-
-If this harms reliability, keep all safe tools registered and enforce state preconditions in `execute`.
+Confirmation-only facts remain applicant decisions. The truthfulness declaration is never agent-authorizable.
 
 ## Failure behavior
 
-Tool calls should fail loudly and semantically:
+Tool calls should fail loudly and semantically for expected domain failures. For example:
 
 ```json
 {
   "ok": false,
-  "code": "EVIDENCE_CONFLICT",
-  "message": "The requested value cannot be verified because the form and income certificate contain different amounts.",
-  "fieldId": "annual_family_income"
+  "code": "HUMAN_ACTION_REQUIRED",
+  "message": "The declaration is a consequential truthfulness attestation and must be performed by the applicant."
 }
 ```
 
-Avoid raw stack traces or generic `Something went wrong` responses for expected domain failures.
+Avoid raw stack traces or generic errors for expected business-rule failures.
 
 ## Graceful WebMCP fallback
 
@@ -335,14 +298,14 @@ if (!("modelContext" in document)) {
 }
 ```
 
-Registration errors should be isolated from normal app startup.
+Registration errors are isolated from normal app startup.
 
 ## Judging proof
 
 The demo should make three things visible:
 
-1. the agent discovers/uses structured webclerk tools;
-2. tool calls visibly update the same form state the human sees;
-3. semantic constraints stop the agent from guessing or bypassing human control.
+1. the agent discovers and uses structured webclerk tools;
+2. `apply_verified_fields` visibly updates the same form state the human sees and records those writes as WebMCP-agent edits;
+3. semantic constraints stop the agent from guessing, using stale evidence, resolving conflicts silently, or bypassing human control.
 
 That is the WebMCP story. Tool count alone is not.
