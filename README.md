@@ -10,9 +10,9 @@ Built for the OpenAI WebMCP Challenge.
 
 ## Current prototype
 
-The current prototype implements a realistic Indian public-service-style scholarship application inspired by the official UX4G Design System and GIGW 3.0 guidance. The UI contains 23 fields, four application sections, five seeded evidence records, deterministic field-state derivation, conflict/staleness checks, preflight validation, undoable change history, and a real WebMCP tool layer.
+The current prototype implements a realistic Indian public-service-style scholarship application inspired by the official UX4G Design System and GIGW 3.0 guidance. The UI contains 23 fields, four application sections, five seeded evidence records, deterministic field-state derivation, conflict/staleness checks, preflight validation, undoable change history, a real WebMCP tool layer, and an inspectable trust UX.
 
-When the experimental browser API is available, webclerk registers eight semantic tools through `document.modelContext`. The same domain functions power both the human-facing form and the agent tools, so the agent cannot bypass the application's evidence and validation rules.
+A judge can now inspect **why** a field is verified, uncertain, or blocked, see the exact supporting evidence/value, identify which fields were changed by a WebMCP agent, distinguish human edits from agent edits, and see a final review gate that explicitly reserves attestation/submission for the applicant.
 
 ## Run locally
 
@@ -35,7 +35,7 @@ WebMCP itself requires a supported browser/agent environment. In ordinary browse
 
 The hackathon MVP focuses on one realistic fictional scholarship application with 23 fields and five supporting documents. The experience demonstrates three core ideas:
 
-1. **Evidence-backed answers** — every suggested value should be traceable to a source.
+1. **Evidence-backed answers** — every suggested value is traceable to a source.
 2. **Uncertainty is visible** — fields can be verified, require confirmation, or be blocked by missing/conflicting evidence.
 3. **Human authority** — the agent may inspect, explain, suggest, validate, and prepare; consequential attestation and submission remain human actions.
 
@@ -44,10 +44,11 @@ The hackathon MVP focuses on one realistic fictional scholarship application wit
 1. Open the scholarship application.
 2. Ask the agent: **"Fill everything you can verify from my documents. Don't guess anything."**
 3. Watch verified fields update while unsupported fields remain unresolved.
-4. Ask why a field was not completed and inspect its requirements/evidence.
-5. Run a full application preflight through WebMCP.
+4. Click **Why this status?** to inspect evidence provenance and decision rules.
+5. Ask the agent to run preflight through WebMCP.
 6. Detect the deliberate income conflict and stale income certificate before submission.
-7. See every agent-authored mutation appear in the same visible change history as human edits.
+7. See every agent-authored mutation highlighted in the form and attributed in change history.
+8. Reach the review gate and show that declaration/submission remain human-only.
 
 ## WebMCP
 
@@ -84,7 +85,7 @@ There is intentionally **no autonomous `submit_application` tool** in the MVP.
 - [x] Milestone 1 — static government-style application workspace
 - [x] Milestone 2 — deterministic domain logic
 - [x] Milestone 3 — WebMCP tool layer
-- [ ] Milestone 4 — trust UX hardening
+- [x] Milestone 4 — trust UX hardening
 - [ ] Milestone 5 — demo hardening
 - [ ] Milestone 6 — submission
 
