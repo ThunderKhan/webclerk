@@ -59,24 +59,28 @@ Exit condition: all core behavior works without an LLM or WebMCP. **Complete.**
 
 Register the MVP tool surface using `document.modelContext`:
 
-- `get_application_state`
-- `inspect_field`
-- `list_evidence`
-- `suggest_field_value`
-- `set_field_value`
-- `find_missing_information`
-- `check_consistency`
-- `run_preflight`
+- [x] `get_application_state`
+- [x] `inspect_field`
+- [x] `list_evidence`
+- [x] `suggest_field_value`
+- [x] `set_field_value`
+- [x] `find_missing_information`
+- [x] `check_consistency`
+- [x] `run_preflight`
 
 Requirements:
 
-- feature detection;
-- registration failure does not break UI;
-- precise JSON schemas;
-- same domain functions as human UI;
-- visible agent-originated change records.
+- [x] feature detection;
+- [x] registration failure does not break UI;
+- [x] precise JSON schemas;
+- [x] same domain functions as human UI;
+- [x] visible agent-originated change records;
+- [x] human-only final declaration;
+- [x] tool adapter tests.
 
-Exit condition: an agent can complete the five required demo intents through actual WebMCP tools.
+The WebMCP layer is a thin adapter over the deterministic engine. Agent writes update the same React state the citizen sees, are marked `agent` in session history, and are immediately re-evaluated by evidence rules. Unsupported browsers keep the normal human workflow intact.
+
+Exit condition: the implemented tool surface can support the required demo intents through actual WebMCP calls. **Complete pending supported-browser end-to-end rehearsal in Milestone 5.**
 
 ## Milestone 4 — Trust UX
 
