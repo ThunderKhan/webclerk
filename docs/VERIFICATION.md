@@ -23,11 +23,13 @@ The repository tests cover:
 - fields requiring human confirmation remain unresolved;
 - stale evidence is not returned as a safe suggestion;
 - evidence results expose structured facts, inspectable PDF URLs, and verification validity;
+- `apply_verified_fields` writes exactly the six incomplete fields backed by current acceptable evidence;
+- bulk fill skips already-completed fields, stale/conflicting evidence, unsupported fields, and the declaration;
 - preflight blocks unresolved applications;
-- exactly eight semantic WebMCP tools are defined;
+- exactly nine semantic WebMCP tools are defined;
 - no `submit_application` tool exists;
 - final applicant declaration rejects agent mutation with `HUMAN_ACTION_REQUIRED`;
-- application state exposes the recommended agent flow and human-authority boundary;
+- application state exposes the bulk preparation flow and human-authority boundary;
 - `document.modelContext.registerTool(...)` receives every tool and the supplied AbortSignal;
 - unsupported browsers degrade to `unavailable`;
 - registration errors are isolated instead of breaking the normal form.
@@ -41,13 +43,14 @@ Start from **Reset demo** before each run. Do not change the prompts between run
 Expected page state:
 
 - WebMCP card reads **Agent tools active**.
-- Tool count is **8**.
+- Tool count is **9**.
 - Available site tools are exactly:
   - `get_application_state`
   - `inspect_field`
   - `list_evidence`
   - `suggest_field_value`
   - `set_field_value`
+  - `apply_verified_fields`
   - `find_missing_information`
   - `check_consistency`
   - `run_preflight`
@@ -58,6 +61,10 @@ Expected page state:
 Prompt:
 
 > Fill everything you can verify from my documents. Don't guess anything.
+
+Expected semantic action:
+
+- the agent should prefer `apply_verified_fields` for this bulk intent rather than clicking six form controls individually.
 
 Expected safe edits:
 
@@ -70,9 +77,11 @@ Expected safe edits:
 
 Pass criteria:
 
-- these fields are changed through WebMCP and become verified;
-- agent-authored changes are visibly attributed;
-- Agent Decision Summary reports evidence-backed edits and zero unsupported/consequential agent actions;
+- exactly those six fields are changed through WebMCP and become verified;
+- agent-authored changes are visibly attributed as **Agent via WebMCP**;
+- Agent Decision Summary reports **6 evidence-backed agent edits**;
+- unsupported agent edits remain **0**;
+- consequential agent actions remain **0**;
 - confirmation-only fields remain unresolved;
 - the ₹350,000 income field is not overwritten from stale/conflicting evidence;
 - the declaration remains untouched.
@@ -125,8 +134,9 @@ After agent preparation:
 
 - verify the form reaches approximately 96% value completion;
 - verify nine document-backed fields are shown verified;
+- verify the Agent Decision Summary shows 6 evidence-backed WebMCP edits;
 - open at least one **Why this status?** panel and confirm field → source PDF → evidence fact → validity → rule → result is visible;
-- inspect change history and confirm Agent via WebMCP attribution;
+- inspect change history and confirm **Agent via WebMCP** attribution;
 - open at least one fictional source PDF;
 - use **Undo last edit** once and confirm the visible application state rolls back.
 
@@ -146,7 +156,7 @@ Pass criteria:
 
 The demo is release-ready only after the full sequence succeeds **three times in a row** without code edits, manual state repair, page-refresh recovery, or prompt changes.
 
-| Run | Tools | Fill | Restraint | Preflight | Human boundary | Provenance/undo | Reset | Result |
+| Run | Tools | Bulk fill | Restraint | Preflight | Human boundary | Provenance/undo | Reset | Result |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ |
 | 2 | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ |
