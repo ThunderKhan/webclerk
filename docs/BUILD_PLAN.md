@@ -60,9 +60,10 @@ Exit condition: all core behavior works without an LLM or WebMCP. **Complete.**
 - [x] shared domain rules;
 - [x] visible agent-originated changes;
 - [x] human-only declaration;
-- [x] adapter tests.
+- [x] adapter tests;
+- [x] registration-lifecycle tests for `document.modelContext`, AbortSignal, fallback and failure isolation.
 
-Exit condition: the implemented tool surface supports the demo intents through actual WebMCP calls. **Complete pending supported-browser end-to-end rehearsal in Milestone 5.**
+Exit condition: the implemented tool surface supports the demo intents through actual WebMCP calls. **Implementation and automated verification complete; supported-browser E2E remains.**
 
 ## Milestone 4 — Trust UX
 
@@ -82,14 +83,17 @@ Exit condition: judge can understand trust/uncertainty behavior without reading 
 
 ## Milestone 5 — Demo hardening
 
-- deterministic seed/reset;
-- test in supported WebMCP browser/agent environment;
-- handle tool errors cleanly;
-- remove dead UI/actions;
-- tighten copy;
-- verify responsive capture layout;
-- rehearse <3 minute path;
-- capture fallback screenshots/video only as presentation backup, never as substitute for a functioning demo.
+- [x] deterministic seed/reset implementation;
+- [x] automated domain/WebMCP registration verification;
+- [x] exact E2E prompts and pass/fail expectations documented in `docs/VERIFICATION.md`;
+- [ ] test in supported WebMCP browser/agent environment;
+- [ ] run complete E2E verification three consecutive times;
+- [ ] handle any real-browser tool/discovery errors found during E2E;
+- [ ] remove dead UI/actions;
+- [ ] tighten copy;
+- [ ] verify responsive capture layout;
+- [ ] rehearse <3 minute path;
+- [ ] capture fallback screenshots/video only as presentation backup, never as substitute for a functioning demo.
 
 Exit condition: three complete demo runs in a row without manual repair.
 
