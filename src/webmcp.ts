@@ -1,6 +1,7 @@
 import { evidenceDocuments, scholarship, type ApplicationField } from "./data";
 import {
   checkConsistency,
+  evidenceFacts,
   findMissingInformation,
   inspectField,
   runPreflight,
@@ -118,6 +119,7 @@ export function createWebMcpTools(bridge: WebMcpBridge): WebMcpToolDefinition[] 
           evidenceValue: inspection.evidenceValue,
           status: inspection.status,
           reason: inspection.reason,
+          agentMutationAllowed: fieldId !== "declaration",
         });
       },
     },
@@ -136,7 +138,15 @@ export function createWebMcpTools(bridge: WebMcpBridge): WebMcpToolDefinition[] 
         const evidence = kind
           ? evidenceDocuments.filter((document) => document.kind.toLocaleLowerCase("en-IN").includes(kind))
           : evidenceDocuments;
-        return result({ ok: true, evidence });
+        return result({
+          ok: true,
+          evidence: evidence.map((document) => ({
+            ...document,
+            facts: evidenceFacts
+              .filter((fact) => fact.evidenceId === document.id)
+              .map((fact) => ({ fieldId: fact.fieldId, value: fact.value })),
+          })),
+        });
       },
     },
     {
@@ -169,7 +179,7 @@ export function createWebMcpTools(bridge: WebMcpBridge): WebMcpToolDefinition[] 
     },
     {
       name: "set_field_value",
-      description: "Write a proposed value into one application field through webclerk's normal domain rules. The page will visibly record the agent-authored edit and re-derive whether the result is verified, needs confirmation, or is blocked.",
+      description: "Write a proposed value into one application field through webclerk's normal domain rules. The page will visibly record the agent-authored edit and re-derive whether the result is verified, needs confirmation, or is blocked. The final applicant declaration cannot be completed by an agent.",
       inputSchema: {
         type: "object",
         properties: {
@@ -184,6 +194,14 @@ export function createWebMcpTools(bridge: WebMcpBridge): WebMcpToolDefinition[] 
         const value = stringArg(input, "value");
         if (!fieldId || value === undefined) {
           return result({ ok: false, code: "INVALID_ARGUMENT", message: "fieldId and value are required." });
+        }
+        if (fieldId === "declaration") {
+          return result({
+            ok: false,
+            code: "HUMAN_ACTION_REQUIRED",
+            fieldId,
+            message: "The applicant declaration is a consequential attestation and must be completed directly by the human applicant.",
+          });
         }
         return result(bridge.setFieldFromAgent(fieldId, value));
       },
