@@ -6,6 +6,28 @@ webclerk is a WebMCP-powered application workspace for completing high-stakes on
 
 Built for the OpenAI WebMCP Challenge.
 
+> **Prototype notice:** the scholarship, department, application identifiers and government-style interface in this repository are fictional. webclerk is not affiliated with or endorsed by the Government of India or any public authority.
+
+## Current prototype
+
+Milestone 1 implements a realistic Indian public-service-style scholarship application inspired by the official UX4G Design System and GIGW 3.0 guidance. The UI contains 23 fields, four application sections, five seeded evidence records, explicit verified/review/blocked states, completion status and a deterministic reset path.
+
+The government-style surface is intentional: later WebMCP milestones will demonstrate how an agent can operate on the application's semantic state without replacing the citizen-facing workflow.
+
+## Run locally
+
+```bash
+npm install
+npm run dev
+```
+
+Production build:
+
+```bash
+npm run build
+npm run preview
+```
+
 ## MVP
 
 The hackathon MVP focuses on one realistic fictional scholarship application with roughly 20–25 fields and five supporting documents. The experience demonstrates three core ideas:
@@ -25,7 +47,7 @@ The hackathon MVP focuses on one realistic fictional scholarship application wit
 
 ## WebMCP
 
-webclerk exposes the application's semantic state through `document.modelContext.registerTool(...)`, allowing an agent to work with fields, evidence, validation results, and application state directly instead of inferring intent from UI structure alone.
+webclerk will expose the application's semantic state through `document.modelContext.registerTool(...)`, allowing an agent to work with fields, evidence, validation results, and application state directly instead of inferring intent from UI structure alone.
 
 Planned tool surface includes:
 
@@ -47,11 +69,19 @@ There is intentionally **no autonomous `submit_application` tool** in the MVP.
 - [`docs/MVP.md`](docs/MVP.md) — hard scope boundary and acceptance criteria
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — application and data architecture
 - [`docs/WEBMCP.md`](docs/WEBMCP.md) — WebMCP contract and tool semantics
+- [`docs/DESIGN.md`](docs/DESIGN.md) — UX4G/GIGW-informed visual and accessibility specification
 - [`docs/DEMO.md`](docs/DEMO.md) — three-minute judging/demo narrative
+- [`docs/BUILD_PLAN.md`](docs/BUILD_PLAN.md) — milestone sequence and scope kill-list
 
 ## Status
 
-Project foundation and implementation planning.
+- [x] Milestone 0 — product foundation
+- [x] Milestone 1 — static government-style application workspace
+- [ ] Milestone 2 — deterministic domain logic
+- [ ] Milestone 3 — WebMCP tool layer
+- [ ] Milestone 4 — trust UX hardening
+- [ ] Milestone 5 — demo hardening
+- [ ] Milestone 6 — submission
 
 ## License
 
