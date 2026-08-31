@@ -35,23 +35,25 @@ Exit condition: the full scenario is understandable and manually usable from the
 
 Implement/test:
 
-- application state access;
-- field inspection;
-- evidence lookup;
-- suggestion logic;
-- value mutation + provenance;
-- change history + undo;
-- missing-information detection;
-- consistency checks;
-- preflight aggregation.
+- [x] application state access;
+- [x] field inspection;
+- [x] evidence lookup;
+- [x] suggestion logic;
+- [x] value mutation + provenance;
+- [x] change history + undo;
+- [x] missing-information detection;
+- [x] consistency checks;
+- [x] preflight aggregation.
 
 Required deterministic checks:
 
-- ₹350,000 vs ₹320,000 income conflict;
-- stale income certificate;
-- ambiguous field remains `needs_confirmation`.
+- [x] ₹350,000 vs ₹320,000 income conflict;
+- [x] stale income certificate;
+- [x] ambiguous field remains `needs_confirmation`.
 
-Exit condition: all core behavior works without an LLM or WebMCP.
+The domain engine is intentionally independent from both React and WebMCP. Seed data describes application values and evidence; trust state is derived at runtime from deterministic rules. Vitest coverage locks the required demo invariants, and CI runs both tests and the production build.
+
+Exit condition: all core behavior works without an LLM or WebMCP. **Complete.**
 
 ## Milestone 3 — WebMCP
 
