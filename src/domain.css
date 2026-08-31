@@ -28,11 +28,35 @@
 .preflight-issue span { display: block; font-size: .7rem; line-height: 1.4; color: #66727d; }
 .preflight-issue:hover, .preflight-issue:focus-visible { outline: 2px solid #21568c; outline-offset: 1px; }
 
+.webmcp-card {
+  margin: 14px;
+  padding: 12px;
+  border: 1px solid #cfd8e2;
+  border-left: 4px solid #66727d;
+  background: #f8fafc;
+}
+.webmcp-card.available { border-left-color: #2b6f48; background: #f5fbf7; }
+.webmcp-card.registering { border-left-color: #356b9b; background: #f5f9fd; }
+.webmcp-card.error { border-left-color: #a33a2c; background: #fffafa; }
+.webmcp-status-row { display: flex; align-items: center; gap: .65rem; }
+.webmcp-status-row > div { min-width: 0; }
+.webmcp-status-row strong, .webmcp-status-row span { display: block; }
+.webmcp-status-row strong { color: #25384a; font-size: .8rem; }
+.webmcp-status-row span { color: #61707d; font-size: .7rem; margin-top: .08rem; }
+.webmcp-dot { width: 9px; height: 9px; border-radius: 50%; background: #7b8793; box-shadow: 0 0 0 3px rgba(123,135,147,.12); flex: 0 0 auto; }
+.webmcp-card.available .webmcp-dot { background: #2b6f48; box-shadow: 0 0 0 3px rgba(43,111,72,.13); }
+.webmcp-card.registering .webmcp-dot { background: #356b9b; box-shadow: 0 0 0 3px rgba(53,107,155,.13); }
+.webmcp-card.error .webmcp-dot { background: #a33a2c; box-shadow: 0 0 0 3px rgba(163,58,44,.12); }
+.webmcp-card p { color: #566572; font-size: .7rem; line-height: 1.45; margin: .6rem 0 0; }
+.webmcp-card small { display: block; color: #506174; font-size: .62rem; line-height: 1.55; overflow-wrap: anywhere; margin-top: .55rem; }
+
 .history-card { margin: 0 14px 14px; padding: 12px; border: 1px solid #e0e5ea; background: #fff; }
 .history-card h4 { margin: 0 0 .55rem; font-size: .8rem; color: #314252; }
 .history-card p { margin: 0; color: #6b7681; font-size: .72rem; }
 .history-card div { border-top: 1px solid #edf0f2; padding: .55rem 0; }
 .history-card div:first-of-type { border-top: 0; }
+.history-card div.agent-change { margin: 0 -.35rem; padding: .55rem .35rem; border-left: 3px solid #356b9b; background: #f4f8fc; }
+.history-card div.agent-change span::before { content: "WebMCP · "; font-weight: 700; color: #356b9b; }
 .history-card strong, .history-card span { display: block; }
 .history-card strong { color: #344454; font-size: .72rem; }
 .history-card span { color: #6b7681; font-size: .68rem; margin-top: .15rem; overflow-wrap: anywhere; }

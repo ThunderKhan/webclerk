@@ -10,9 +10,9 @@ Built for the OpenAI WebMCP Challenge.
 
 ## Current prototype
 
-Milestone 1 implements a realistic Indian public-service-style scholarship application inspired by the official UX4G Design System and GIGW 3.0 guidance. The UI contains 23 fields, four application sections, five seeded evidence records, explicit verified/review/blocked states, completion status and a deterministic reset path.
+The current prototype implements a realistic Indian public-service-style scholarship application inspired by the official UX4G Design System and GIGW 3.0 guidance. The UI contains 23 fields, four application sections, five seeded evidence records, deterministic field-state derivation, conflict/staleness checks, preflight validation, undoable change history, and a real WebMCP tool layer.
 
-The government-style surface is intentional: later WebMCP milestones will demonstrate how an agent can operate on the application's semantic state without replacing the citizen-facing workflow.
+When the experimental browser API is available, webclerk registers eight semantic tools through `document.modelContext`. The same domain functions power both the human-facing form and the agent tools, so the agent cannot bypass the application's evidence and validation rules.
 
 ## Run locally
 
@@ -21,35 +21,39 @@ npm install
 npm run dev
 ```
 
-Production build:
+Tests and production build:
 
 ```bash
+npm test
 npm run build
 npm run preview
 ```
 
+WebMCP itself requires a supported browser/agent environment. In ordinary browsers the human interface remains fully functional and displays WebMCP as unavailable rather than failing startup.
+
 ## MVP
 
-The hackathon MVP focuses on one realistic fictional scholarship application with roughly 20–25 fields and five supporting documents. The experience demonstrates three core ideas:
+The hackathon MVP focuses on one realistic fictional scholarship application with 23 fields and five supporting documents. The experience demonstrates three core ideas:
 
 1. **Evidence-backed answers** — every suggested value should be traceable to a source.
 2. **Uncertainty is visible** — fields can be verified, require confirmation, or be blocked by missing/conflicting evidence.
-3. **Human authority** — the agent may inspect, explain, suggest, validate, and prepare; the human performs consequential submission.
+3. **Human authority** — the agent may inspect, explain, suggest, validate, and prepare; consequential attestation and submission remain human actions.
 
 ## Core demo flow
 
 1. Open the scholarship application.
 2. Ask the agent: **"Fill everything you can verify from my documents. Don't guess anything."**
-3. Watch verified fields populate while uncertain fields remain unresolved.
+3. Watch verified fields update while unsupported fields remain unresolved.
 4. Ask why a field was not completed and inspect its requirements/evidence.
-5. Run a full application preflight.
-6. Detect a deliberate income conflict and an expired document before submission.
+5. Run a full application preflight through WebMCP.
+6. Detect the deliberate income conflict and stale income certificate before submission.
+7. See every agent-authored mutation appear in the same visible change history as human edits.
 
 ## WebMCP
 
-webclerk will expose the application's semantic state through `document.modelContext.registerTool(...)`, allowing an agent to work with fields, evidence, validation results, and application state directly instead of inferring intent from UI structure alone.
+webclerk exposes the application's semantic state through `document.modelContext.registerTool(...)`, allowing an agent to work with fields, evidence, validation results, and application state directly instead of inferring intent from UI structure alone.
 
-Planned tool surface includes:
+Implemented tool surface:
 
 - `get_application_state`
 - `inspect_field`
@@ -59,7 +63,8 @@ Planned tool surface includes:
 - `find_missing_information`
 - `check_consistency`
 - `run_preflight`
-- `prepare_submission`
+
+The adapter includes feature detection and isolated registration failure handling. `set_field_value` records agent-originated edits visibly and then re-runs normal domain derivation. The final applicant declaration is explicitly rejected with `HUMAN_ACTION_REQUIRED` when an agent attempts to complete it.
 
 There is intentionally **no autonomous `submit_application` tool** in the MVP.
 
@@ -77,8 +82,8 @@ There is intentionally **no autonomous `submit_application` tool** in the MVP.
 
 - [x] Milestone 0 — product foundation
 - [x] Milestone 1 — static government-style application workspace
-- [ ] Milestone 2 — deterministic domain logic
-- [ ] Milestone 3 — WebMCP tool layer
+- [x] Milestone 2 — deterministic domain logic
+- [x] Milestone 3 — WebMCP tool layer
 - [ ] Milestone 4 — trust UX hardening
 - [ ] Milestone 5 — demo hardening
 - [ ] Milestone 6 — submission

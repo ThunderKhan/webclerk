@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ApplicationField,
   evidenceDocuments,
@@ -12,6 +12,11 @@ import {
   makeChangeRecord,
   runPreflight,
 } from "./domain";
+import {
+  registerWebMcpTools,
+  WEBMCP_TOOL_NAMES,
+  type WebMcpAvailability,
+} from "./webmcp";
 
 const sectionOrder: ApplicationField["section"][] = ["personal", "education", "financial", "eligibility"];
 
@@ -60,15 +65,74 @@ function FieldControl({ field, onChange }: { field: ApplicationField; onChange: 
   );
 }
 
+function webMcpStatusCopy(status: WebMcpAvailability) {
+  if (status === "available") return "Agent tools active";
+  if (status === "registering") return "Registering agent tools…";
+  if (status === "error") return "Tool registration failed";
+  return "WebMCP unavailable in this browser";
+}
+
 function App() {
   const [rawFields, setRawFields] = useState<ApplicationField[]>(initialFields);
   const [activeSection, setActiveSection] = useState<ApplicationField["section"]>("personal");
   const [showNotice, setShowNotice] = useState(true);
   const [history, setHistory] = useState<ChangeRecord[]>([]);
   const [showPreflight, setShowPreflight] = useState(false);
+  const [webMcpStatus, setWebMcpStatus] = useState<WebMcpAvailability>("registering");
+  const [registeredToolCount, setRegisteredToolCount] = useState(0);
+
+  const rawFieldsRef = useRef(rawFields);
+  const changeSequenceRef = useRef(1);
+  rawFieldsRef.current = rawFields;
 
   const fields = useMemo(() => deriveFields(rawFields, evidenceDocuments), [rawFields]);
   const preflight = useMemo(() => runPreflight(rawFields, evidenceDocuments), [rawFields]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    registerWebMcpTools({
+      getFields: () => deriveFields(rawFieldsRef.current, evidenceDocuments),
+      setFieldFromAgent: (fieldId, value) => {
+        const current = rawFieldsRef.current;
+        const previous = current.find((field) => field.id === fieldId);
+        if (!previous) {
+          return { ok: false, message: `No application field exists with id ${fieldId}.` };
+        }
+
+        if (previous.value === value) {
+          const field = deriveFields(current, evidenceDocuments).find((item) => item.id === fieldId);
+          return { ok: true, field, message: "The field already contains that value; no change was needed." };
+        }
+
+        const next = current.map((field) => field.id === fieldId ? { ...field, value } : field);
+        const change = makeChangeRecord(fieldId, previous.value, value, "agent", changeSequenceRef.current++);
+        rawFieldsRef.current = next;
+        setRawFields(next);
+        setHistory((records) => [...records, change]);
+        setShowPreflight(false);
+        const derived = deriveFields(next, evidenceDocuments).find((field) => field.id === fieldId);
+
+        return {
+          ok: true,
+          field: derived,
+          change,
+          message: derived?.status === "verified"
+            ? "Value applied and verified against acceptable evidence."
+            : derived?.status === "blocked"
+              ? "Value applied, but domain rules marked the field blocked. The conflict remains visible for human review."
+              : "Value applied, but it still requires applicant confirmation. The agent did not promote it to verified.",
+        };
+      },
+      onPreflightRun: () => setShowPreflight(true),
+    }, controller.signal).then((registration) => {
+      if (controller.signal.aborted) return;
+      setWebMcpStatus(registration.status);
+      setRegisteredToolCount(registration.registered);
+    });
+
+    return () => controller.abort();
+  }, []);
 
   const counts = useMemo(() => fields.reduce(
     (acc, field) => {
@@ -85,11 +149,13 @@ function App() {
     setRawFields((current) => {
       const previous = current.find((field) => field.id === id);
       if (!previous || previous.value === value) return current;
+      const next = current.map((field) => field.id === id ? { ...field, value } : field);
+      rawFieldsRef.current = next;
       setHistory((records) => [
         ...records,
-        makeChangeRecord(id, previous.value, value, "human", records.length + 1),
+        makeChangeRecord(id, previous.value, value, "human", changeSequenceRef.current++),
       ]);
-      return current.map((field) => field.id === id ? { ...field, value } : field);
+      return next;
     });
     setShowPreflight(false);
   }
@@ -97,12 +163,18 @@ function App() {
   function undoLastChange() {
     const last = history.at(-1);
     if (!last) return;
-    setRawFields((current) => current.map((field) => field.id === last.fieldId ? { ...field, value: last.previousValue } : field));
+    setRawFields((current) => {
+      const next = current.map((field) => field.id === last.fieldId ? { ...field, value: last.previousValue } : field);
+      rawFieldsRef.current = next;
+      return next;
+    });
     setHistory((records) => records.slice(0, -1));
     setShowPreflight(false);
   }
 
   function resetDemo() {
+    rawFieldsRef.current = initialFields;
+    changeSequenceRef.current = 1;
     setRawFields(initialFields);
     setActiveSection("personal");
     setShowNotice(true);
@@ -197,7 +269,7 @@ function App() {
               </div>
             </div>
 
-            <div className="form-instructions">Fields marked with <strong>*</strong> are mandatory. Statuses are derived from deterministic evidence rules, not hard-coded UI labels.</div>
+            <div className="form-instructions">Fields marked with <strong>*</strong> are mandatory. Statuses are derived from deterministic evidence rules. WebMCP agents use those same rules rather than bypassing the form.</div>
 
             <div className="section-tabs" role="tablist" aria-label="Application sections">
               {sectionOrder.map((section, index) => {
@@ -225,7 +297,17 @@ function App() {
 
           <aside className="evidence-panel" aria-labelledby="evidence-title">
             <div className="panel-heading"><div><span className="step-kicker">Supporting records</span><h3 id="evidence-title">Uploaded Documents</h3></div><span className="document-count">{evidenceDocuments.length}</span></div>
-            <p className="panel-intro">These records are now active evidence: field status, conflicts and validity are derived from them by the domain engine.</p>
+
+            <div className={`webmcp-card ${webMcpStatus}`} aria-live="polite">
+              <div className="webmcp-status-row">
+                <span className="webmcp-dot" aria-hidden="true" />
+                <div><strong>WebMCP</strong><span>{webMcpStatusCopy(webMcpStatus)}</span></div>
+              </div>
+              <p>{webMcpStatus === "available" ? `${registeredToolCount} semantic tools are exposed to the browser agent. Agent edits appear in the same form and change history.` : "The human application remains fully functional even when the experimental browser API is absent."}</p>
+              {webMcpStatus === "available" && <small>{WEBMCP_TOOL_NAMES.join(" · ")}</small>}
+            </div>
+
+            <p className="panel-intro">These records are active evidence: field status, conflicts and validity are derived from them by the same domain engine used by WebMCP.</p>
             <div className="document-list">
               {evidenceDocuments.map((document) => (
                 <article key={document.id} className={`document-card ${document.status}`}>
@@ -238,9 +320,9 @@ function App() {
             <div className="legend-card"><h4>Field status</h4><ul><li><span className="legend-dot verified" />Verified from evidence</li><li><span className="legend-dot confirmation" />Needs applicant confirmation</li><li><span className="legend-dot blocked" />Conflict or invalid evidence</li></ul></div>
             <div className="history-card">
               <h4>Change history</h4>
-              {history.length === 0 ? <p>No edits in this session.</p> : history.slice(-4).reverse().map((record) => {
+              {history.length === 0 ? <p>No edits in this session.</p> : history.slice(-5).reverse().map((record) => {
                 const field = fields.find((item) => item.id === record.fieldId);
-                return <div key={record.id}><strong>{field?.label ?? record.fieldId}</strong><span>{record.origin} · {record.previousValue || "blank"} → {record.nextValue || "blank"}</span></div>;
+                return <div key={record.id} className={record.origin === "agent" ? "agent-change" : ""}><strong>{field?.label ?? record.fieldId}</strong><span>{record.origin} · {record.previousValue || "blank"} → {record.nextValue || "blank"}</span></div>;
               })}
             </div>
           </aside>
