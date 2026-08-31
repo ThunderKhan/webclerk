@@ -1,0 +1,43 @@
+.document-card {
+  display: block;
+}
+
+.document-link-button {
+  position: relative;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  width: 100%;
+  min-width: 0;
+}
+
+.document-copy {
+  min-width: 0;
+  padding-right: 64px;
+}
+
+.document-copy strong,
+.document-copy span,
+.document-copy small,
+.document-copy p,
+.document-facts {
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.document-copy p,
+.document-facts {
+  max-width: 100%;
+}
+
+.document-state {
+  right: 0;
+  top: 0;
+}
+
+@media (max-width: 1050px) {
+  .document-copy {
+    padding-right: 72px;
+  }
+}
