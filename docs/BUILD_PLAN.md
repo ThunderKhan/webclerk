@@ -18,16 +18,18 @@ Exit condition: implementation can begin without unresolved product-scope questi
 
 Build:
 
-- app shell;
-- scholarship sections and ~20–25 fields;
-- evidence panel with five seeded documents/fact sets;
-- semantic field states;
-- status summary;
-- reset-demo control.
+- [x] app shell;
+- [x] scholarship sections and ~20–25 fields;
+- [x] evidence panel with five seeded documents/fact sets;
+- [x] semantic field states;
+- [x] status summary;
+- [x] reset-demo control;
+- [x] realistic Indian public-service visual language informed by UX4G/GIGW;
+- [x] conspicuous fictional-demo/non-affiliation labeling.
 
 No agent required yet.
 
-Exit condition: the full scenario is understandable and manually usable from the UI.
+Exit condition: the full scenario is understandable and manually usable from the UI. **Complete.**
 
 ## Milestone 2 — Domain logic
 
