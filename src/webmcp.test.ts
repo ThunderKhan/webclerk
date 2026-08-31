@@ -1,7 +1,12 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { evidenceDocuments, initialFields } from "./data";
 import { deriveFields } from "./domain";
-import { createWebMcpTools, WEBMCP_TOOL_NAMES, type WebMcpBridge } from "./webmcp";
+import {
+  createWebMcpTools,
+  registerWebMcpTools,
+  WEBMCP_TOOL_NAMES,
+  type WebMcpBridge,
+} from "./webmcp";
 
 function parseToolResult(output: unknown) {
   const result = output as WebMcpToolResult;
@@ -15,10 +20,15 @@ function makeBridge(): WebMcpBridge {
   };
 }
 
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
 describe("WebMCP tool adapter", () => {
   it("exposes the intended eight semantic tools", () => {
     const tools = createWebMcpTools(makeBridge());
     expect(tools.map((tool) => tool.name)).toEqual([...WEBMCP_TOOL_NAMES]);
+    expect(tools.some((tool) => tool.name === "submit_application")).toBe(false);
   });
 
   it("returns a compact application state from the deterministic engine", async () => {
@@ -74,5 +84,40 @@ describe("WebMCP tool adapter", () => {
     const payload = parseToolResult(await tool.execute({}));
     expect(payload.ok).toBe(true);
     expect(onPreflightRun).toHaveBeenCalledOnce();
+  });
+
+  it("registers every tool on document.modelContext with the supplied abort signal", async () => {
+    const registerTool = vi.fn(async (_tool: WebMcpToolDefinition, _options?: { signal?: AbortSignal }) => undefined);
+    vi.stubGlobal("document", { modelContext: { registerTool } });
+    const controller = new AbortController();
+
+    const registration = await registerWebMcpTools(makeBridge(), controller.signal);
+
+    expect(registration).toEqual({ status: "available", registered: WEBMCP_TOOL_NAMES.length });
+    expect(registerTool).toHaveBeenCalledTimes(WEBMCP_TOOL_NAMES.length);
+    expect(registerTool.mock.calls.map(([tool]) => tool.name)).toEqual([...WEBMCP_TOOL_NAMES]);
+    for (const [, options] of registerTool.mock.calls) {
+      expect(options).toEqual({ signal: controller.signal });
+    }
+  });
+
+  it("degrades cleanly when the browser does not expose WebMCP", async () => {
+    vi.stubGlobal("document", {});
+    const registration = await registerWebMcpTools(makeBridge(), new AbortController().signal);
+    expect(registration).toEqual({ status: "unavailable", registered: 0 });
+  });
+
+  it("isolates registration failures instead of breaking normal app startup", async () => {
+    const registerTool = vi.fn(async (_tool: WebMcpToolDefinition, _options?: { signal?: AbortSignal }) => {
+      throw new Error("registration denied");
+    });
+    vi.stubGlobal("document", { modelContext: { registerTool } });
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    const registration = await registerWebMcpTools(makeBridge(), new AbortController().signal);
+
+    expect(registration).toEqual({ status: "error", registered: 0 });
+    expect(errorSpy).toHaveBeenCalledOnce();
+    errorSpy.mockRestore();
   });
 });
