@@ -31,21 +31,51 @@ describe("WebMCP tool adapter", () => {
     expect(tools.some((tool) => tool.name === "submit_application")).toBe(false);
   });
 
-  it("returns a compact application state from the deterministic engine", async () => {
+  it("returns application state with recommended orchestration and human authority boundaries", async () => {
     const tool = createWebMcpTools(makeBridge()).find((item) => item.name === "get_application_state")!;
     const payload = parseToolResult(await tool.execute({}));
     expect(payload.ok).toBe(true);
     expect(payload.evidenceCount).toBe(5);
     expect(payload.preflight).toMatchObject({ ready: false });
+    expect(payload.recommendedFlow).toEqual([
+      "list_evidence",
+      "find_missing_information",
+      "suggest_field_value",
+      "set_field_value",
+      "run_preflight",
+    ]);
+    expect(payload.humanAuthority).toMatchObject({
+      declaration: "human_only",
+      submission: "not_exposed_as_a_webmcp_tool",
+    });
   });
 
-  it("exposes structured evidence facts rather than document labels only", async () => {
+  it("exposes structured evidence facts, source PDFs, and verification validity", async () => {
     const tool = createWebMcpTools(makeBridge()).find((item) => item.name === "list_evidence")!;
     const payload = parseToolResult(await tool.execute({ kind: "education" }));
-    const evidence = payload.evidence as Array<{ id: string; facts: Array<{ fieldId: string; value: string }> }>;
+    const evidence = payload.evidence as Array<{
+      id: string;
+      sourceUrl: string;
+      validity: string;
+      acceptableForVerification: boolean;
+      facts: Array<{ fieldId: string; value: string }>;
+    }>;
+    expect(payload.extractionMode).toBe("pre_extracted_structured_demo_evidence");
+    expect(payload.arbitraryPdfIngestionSupported).toBe(false);
     expect(evidence).toHaveLength(1);
     expect(evidence[0].id).toBe("enrollment");
+    expect(evidence[0].sourceUrl).toBe("/evidence/Enrollment_Certificate.pdf");
+    expect(evidence[0].validity).toBe("current");
+    expect(evidence[0].acceptableForVerification).toBe(true);
     expect(evidence[0].facts).toContainEqual({ fieldId: "programme", value: "Bachelor of Computer Applications" });
+  });
+
+  it("marks stale evidence as unacceptable for verification", async () => {
+    const tool = createWebMcpTools(makeBridge()).find((item) => item.name === "list_evidence")!;
+    const payload = parseToolResult(await tool.execute({ kind: "financial" }));
+    const evidence = payload.evidence as Array<{ validity: string; acceptableForVerification: boolean }>;
+    expect(evidence).toHaveLength(1);
+    expect(evidence[0]).toMatchObject({ validity: "stale", acceptableForVerification: false });
   });
 
   it("does not offer stale evidence as a safe field suggestion", async () => {
@@ -73,16 +103,21 @@ describe("WebMCP tool adapter", () => {
     const payload = parseToolResult(await tool.execute({ fieldId: "declaration", value: "I confirm" }));
     expect(payload.ok).toBe(false);
     expect(payload.code).toBe("HUMAN_ACTION_REQUIRED");
+    expect(String(payload.message)).toContain("truthfulness attestation");
     expect(mutation).not.toHaveBeenCalled();
   });
 
-  it("makes an agent-run preflight visible through the bridge callback", async () => {
+  it("makes an agent-run preflight visible and restates the human authority boundary", async () => {
     const onPreflightRun = vi.fn();
     const bridge = makeBridge();
     bridge.onPreflightRun = onPreflightRun;
     const tool = createWebMcpTools(bridge).find((item) => item.name === "run_preflight")!;
     const payload = parseToolResult(await tool.execute({}));
     expect(payload.ok).toBe(true);
+    expect(payload.humanAuthority).toMatchObject({
+      declaration: "human_only",
+      submission: "not_exposed_as_a_webmcp_tool",
+    });
     expect(onPreflightRun).toHaveBeenCalledOnce();
   });
 
