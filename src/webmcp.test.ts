@@ -25,24 +25,37 @@ afterEach(() => {
 });
 
 describe("WebMCP tool adapter", () => {
-  it("exposes the intended nine semantic tools", () => {
+  it("exposes the intended nine semantic tools with bulk fill immediately after state", () => {
     const tools = createWebMcpTools(makeBridge());
     expect(tools.map((tool) => tool.name)).toEqual([...WEBMCP_TOOL_NAMES]);
+    expect(WEBMCP_TOOL_NAMES[0]).toBe("get_application_state");
+    expect(WEBMCP_TOOL_NAMES[1]).toBe("fill_verified_fields_from_evidence");
     expect(tools.some((tool) => tool.name === "submit_application")).toBe(false);
-    expect(tools.some((tool) => tool.name === "apply_verified_fields")).toBe(true);
+    expect(tools.some((tool) => tool.name === "apply_verified_fields")).toBe(false);
   });
 
-  it("returns application state with bulk-fill orchestration and human authority boundaries", async () => {
+  it("returns explicit safe-edit availability and recommends the bulk mutation", async () => {
     const tool = createWebMcpTools(makeBridge()).find((item) => item.name === "get_application_state")!;
     const payload = parseToolResult(await tool.execute({}));
     expect(payload.ok).toBe(true);
     expect(payload.evidenceCount).toBe(5);
     expect(payload.preflight).toMatchObject({ ready: false });
+    expect(payload.safeEvidenceBackedEditsAvailable).toBe(6);
+    expect(payload.safeEvidenceBackedFieldIds).toEqual([
+      "programme",
+      "year",
+      "enrollment",
+      "previous_score",
+      "domicile_state",
+      "domicile_cert",
+    ]);
+    expect(payload.recommendedNextAction).toBe("fill_verified_fields_from_evidence");
     expect(payload.recommendedFlow).toEqual([
-      "list_evidence",
-      "apply_verified_fields",
+      "get_application_state",
+      "fill_verified_fields_from_evidence",
       "run_preflight",
     ]);
+    expect(payload.granularEditTools).toMatchObject({ preferredForBulkPreparation: false });
     expect(payload.humanAuthority).toMatchObject({
       declaration: "human_only",
       submission: "not_exposed_as_a_webmcp_tool",
@@ -84,7 +97,7 @@ describe("WebMCP tool adapter", () => {
     expect(payload.code).toBe("NO_VERIFIABLE_SUGGESTION");
   });
 
-  it("applies all incomplete evidence-backed fields through the shared agent bridge", async () => {
+  it("fills all six safe incomplete fields through the WebMCP agent bridge", async () => {
     let raw = initialFields.map((field) => ({ ...field }));
     const mutation = vi.fn((fieldId: string, value: string) => {
       raw = raw.map((field) => field.id === fieldId ? { ...field, value } : field);
@@ -95,7 +108,7 @@ describe("WebMCP tool adapter", () => {
       getFields: () => deriveFields(raw, evidenceDocuments),
       setFieldFromAgent: mutation,
     };
-    const tool = createWebMcpTools(bridge).find((item) => item.name === "apply_verified_fields")!;
+    const tool = createWebMcpTools(bridge).find((item) => item.name === "fill_verified_fields_from_evidence")!;
     const payload = parseToolResult(await tool.execute({}));
     const applied = payload.applied as Array<{ fieldId: string }>;
 
@@ -109,21 +122,25 @@ describe("WebMCP tool adapter", () => {
       "domicile_state",
       "domicile_cert",
     ]);
+    expect(payload.remainingSafeEvidenceBackedEdits).toBe(0);
+    expect(payload.remainingSafeEvidenceBackedFieldIds).toEqual([]);
     expect(mutation).toHaveBeenCalledTimes(6);
     expect(mutation).not.toHaveBeenCalledWith("family_income", "320000");
     expect(mutation).not.toHaveBeenCalledWith("declaration", expect.anything());
     expect(payload.policy).toMatchObject({
       unsupportedGuesses: 0,
+      confirmationOnlyFieldsChanged: 0,
+      staleEvidenceUsed: false,
       declaration: "human_only",
       submission: "not_exposed_as_a_webmcp_tool",
     });
   });
 
-  it("does not reapply already completed evidence-backed fields", async () => {
+  it("does not include already completed evidence-backed fields in the bulk write", async () => {
     const bridge = makeBridge();
     const mutation = vi.fn(bridge.setFieldFromAgent);
     bridge.setFieldFromAgent = mutation;
-    const tool = createWebMcpTools(bridge).find((item) => item.name === "apply_verified_fields")!;
+    const tool = createWebMcpTools(bridge).find((item) => item.name === "fill_verified_fields_from_evidence")!;
     const payload = parseToolResult(await tool.execute({}));
     expect(payload.appliedCount).toBe(6);
     expect(mutation).not.toHaveBeenCalledWith("full_name", "Ayan Khan");
