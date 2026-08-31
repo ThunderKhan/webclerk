@@ -111,6 +111,18 @@ export function deriveField(field: ApplicationField, evidence: EvidenceDocument[
 
   const match = evidenceForField(field.id, evidence);
   if (match) {
+    // A contradictory value is the most actionable field-level problem, so
+    // surface it before document-age validation. Other fields backed by the
+    // same stale document can still expose the staleness independently.
+    if (normalize(value) !== normalize(match.fact.value)) {
+      return {
+        ...field,
+        status: "blocked",
+        source: match.document.name,
+        issue: `Conflict: application value is ${formatValue(field, value)} while the evidence states ${formatValue(field, match.fact.value)}.`,
+      };
+    }
+
     const stale = isEvidenceStale(match.document, now);
     if (stale) {
       return {
@@ -118,15 +130,6 @@ export function deriveField(field: ApplicationField, evidence: EvidenceDocument[
         status: "blocked",
         source: match.document.name,
         issue: `${match.document.name} is outside the accepted ${match.document.maxAgeMonths}-month validity window.`,
-      };
-    }
-
-    if (normalize(value) !== normalize(match.fact.value)) {
-      return {
-        ...field,
-        status: "blocked",
-        source: match.document.name,
-        issue: `Conflict: application value is ${formatValue(field, value)} while the evidence states ${formatValue(field, match.fact.value)}.`,
       };
     }
 
