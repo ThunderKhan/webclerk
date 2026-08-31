@@ -23,6 +23,7 @@ export interface EvidenceDocument {
   reference: string;
   status: "accepted" | "warning";
   note: string;
+  sourceUrl: string;
   issuedAt?: string;
   maxAgeMonths?: number;
 }
@@ -68,11 +69,11 @@ export const initialFields: ApplicationField[] = [
 ];
 
 export const evidenceDocuments: EvidenceDocument[] = [
-  { id: "identity", name: "Identity_Card.pdf", kind: "Identity proof", reference: "ID •••• 4182", status: "accepted", note: "Name and date of birth available." },
-  { id: "enrollment", name: "Enrollment_Certificate.pdf", kind: "Education proof", reference: "Issued 05 Aug 2026", status: "accepted", note: "Institution, programme, year and enrollment number available.", issuedAt: "2026-08-05" },
-  { id: "marksheet", name: "Previous_Year_Marksheet.pdf", kind: "Academic proof", reference: "Academic year 2025–26", status: "accepted", note: "Previous-year percentage available." },
-  { id: "income", name: "Income_Certificate.pdf", kind: "Financial proof", reference: "Issued 10 Jun 2025", status: "warning", note: "Older than 12 months and states ₹320,000, conflicting with the form.", issuedAt: "2025-06-10", maxAgeMonths: 12 },
-  { id: "domicile", name: "Domicile_Certificate.pdf", kind: "Residence proof", reference: "Issued 18 Feb 2026", status: "accepted", note: "Uttar Pradesh domicile and certificate number available.", issuedAt: "2026-02-18" },
+  { id: "identity", name: "Identity_Card.pdf", kind: "Identity proof", reference: "ID •••• 4182", status: "accepted", note: "Name and date of birth available.", sourceUrl: "/evidence/Identity_Card.pdf" },
+  { id: "enrollment", name: "Enrollment_Certificate.pdf", kind: "Education proof", reference: "Issued 05 Aug 2026", status: "accepted", note: "Institution, programme, year and enrollment number available.", sourceUrl: "/evidence/Enrollment_Certificate.pdf", issuedAt: "2026-08-05" },
+  { id: "marksheet", name: "Previous_Year_Marksheet.pdf", kind: "Academic proof", reference: "Academic year 2025–26", status: "accepted", note: "Previous-year percentage available.", sourceUrl: "/evidence/Previous_Year_Marksheet.pdf" },
+  { id: "income", name: "Income_Certificate.pdf", kind: "Financial proof", reference: "Issued 10 Jun 2025", status: "warning", note: "Older than 12 months and states ₹320,000, conflicting with the form.", sourceUrl: "/evidence/Income_Certificate.pdf", issuedAt: "2025-06-10", maxAgeMonths: 12 },
+  { id: "domicile", name: "Domicile_Certificate.pdf", kind: "Residence proof", reference: "Issued 18 Feb 2026", status: "accepted", note: "Uttar Pradesh domicile and certificate number available.", sourceUrl: "/evidence/Domicile_Certificate.pdf", issuedAt: "2026-02-18" },
 ];
 
 export const sectionLabels: Record<ApplicationField["section"], string> = {
