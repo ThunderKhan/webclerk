@@ -62,6 +62,25 @@ describe("webclerk deterministic domain engine", () => {
     expect(suggestFieldValue("family_income", evidenceDocuments, TEST_REFERENCE_NOW)).toBeUndefined();
   });
 
+  it("never verifies or suggests evidence that is not accepted", () => {
+    const warningEvidence = evidenceDocuments.map((document) =>
+      document.id === "enrollment"
+        ? { ...document, status: "warning" as const }
+        : document,
+    );
+
+    const programme = initialFields.map((field) =>
+      field.id === "programme"
+        ? { ...field, value: "Bachelor of Computer Applications" }
+        : field,
+    );
+
+    const inspection = inspectField("programme", programme, warningEvidence, TEST_REFERENCE_NOW);
+    expect(inspection?.status).toBe("blocked");
+    expect(inspection?.reason).toContain("not accepted evidence");
+    expect(suggestFieldValue("programme", warningEvidence, TEST_REFERENCE_NOW)).toBeUndefined();
+  });
+
   it("finds required unresolved information", () => {
     const unresolved = findMissingInformation(initialFields, evidenceDocuments, TEST_REFERENCE_NOW);
     expect(unresolved.some((field) => field.id === "declaration")).toBe(true);
