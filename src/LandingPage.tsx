@@ -14,8 +14,8 @@ function LandingPage() {
     <div id="top" className="landing-shell">
       <header className="landing-nav">
         <a className="landing-brand" href="#top" aria-label="webclerk home"><span className="brand-seal">✣</span><span>webclerk</span></a>
-        <nav aria-label="Landing navigation"><a href="#why">Why</a><a href="#workflow">How it works</a><a href="#trust">Trust</a><a href="#tools">Tools</a></nav>
-        <div className="nav-actions"><a className="ghost-btn" href="https://github.com/ThunderKhan/webclerk" target="_blank" rel="noreferrer">GitHub ↗</a><a className="primary-btn small" href="/demo">Open live demo ↗</a></div>
+        <nav aria-label="Landing navigation"><a href="#why">Why</a><a href="#trust">Trust</a><a href="#workflow">How it works</a><a href="#tools">Tools</a></nav>
+        <div className="nav-actions"><a className="ghost-btn" href="https://github.com/ThunderKhan/webclerk" target="_blank" rel="noreferrer">GitHub</a><a className="primary-btn small" href="/demo">Open live demo</a></div>
       </header>
 
       <main id="main-content">
@@ -24,13 +24,24 @@ function LandingPage() {
             <span className="section-kicker">EVIDENCE &gt; CONFIDENCE</span>
             <h1>Never guess on consequential forms.</h1>
             <p>A WebMCP-powered trust layer that lets agents prepare applications from evidence, preserve uncertainty, surface conflicts, and leave consequential decisions to the human.</p>
-            <div className="hero-actions"><a className="primary-btn" href="/demo">▶ Open the live demo</a><a className="ghost-btn" href="https://github.com/ThunderKhan/webclerk" target="_blank" rel="noreferrer">View on GitHub ↗</a></div>
+            <div className="hero-actions"><a className="primary-btn" href="/demo">Open the live demo</a><a className="ghost-btn" href="https://github.com/ThunderKhan/webclerk" target="_blank" rel="noreferrer">View on GitHub</a></div>
             <div className="hero-proof"><span>✓ Evidence-backed</span><span>✓ Semantic WebMCP tools</span><span>✓ Human-first boundaries</span></div>
           </div>
-          <div className="hero-art">
-            <img className="clerk-spider" src="/webclerk-spider.webp" alt="Cartoon Victorian spider clerk holding a quill, ledger, sealed document, and magnifying glass" />
-            <p className="mascot-caption">A meticulous clerk for the web.<br/><strong>Files what is supported. Flags what is not.</strong></p>
-          </div>
+          <aside className="hero-resource-panel" aria-label="Project resources">
+            <div className="resource-eyebrow">PROJECT RESOURCES</div>
+            <h2>Inspect the implementation.</h2>
+            <p>webclerk exposes explicit semantic capabilities instead of relying on brittle DOM scraping or coordinate-based automation.</p>
+            <div className="resource-actions">
+              <a className="resource-btn" href="https://github.com/ThunderKhan/webclerk" target="_blank" rel="noreferrer"><span>GitHub</span><small>Source, tests, architecture</small></a>
+              <a className="resource-btn" href="https://github.com/ThunderKhan/webclerk/blob/main/docs/WEBMCP.md" target="_blank" rel="noreferrer"><span>Read WebMCP documentation</span><small>Tool contracts and trust boundaries</small></a>
+            </div>
+            <div className="resource-metrics" aria-label="WebMCP capability summary">
+              <div><strong>9</strong><span>semantic tools</span></div>
+              <div><strong>7 / 2</strong><span>read / write</span></div>
+              <div><strong>0</strong><span>submit tools</span></div>
+            </div>
+            <div className="challenge-note">Built for the OpenAI WebMCP Challenge</div>
+          </aside>
         </section>
 
         <section id="why" className="landing-section split problem-section">
@@ -80,7 +91,7 @@ function LandingPage() {
         <section className="landing-section use-cases"><span className="section-kicker danger">BEYOND SCHOLARSHIPS</span><h2>A trust pattern for many domains.</h2><div className="pill-grid"><span>Visa applications</span><span>Insurance claims</span><span>Public benefits</span><span>Financial aid</span><span>Compliance</span><span>Vendor onboarding</span></div></section>
       </main>
 
-      <footer className="landing-footer"><div className="footer-brand"><span className="brand-seal">✣</span><div><strong>webclerk</strong><span>Evidence. Integrity. Your signature.</span></div></div><blockquote>“A good clerk files what is true, not what is convenient.”</blockquote><div className="footer-links"><a href="/demo">Demo</a><a href="https://github.com/ThunderKhan/webclerk" target="_blank" rel="noreferrer">GitHub</a><a href="https://github.com/ThunderKhan/webclerk/blob/main/docs/ARCHITECTURE.md" target="_blank" rel="noreferrer">Architecture</a><a href="https://github.com/ThunderKhan/webclerk/blob/main/docs/WEBMCP.md" target="_blank" rel="noreferrer">WebMCP</a></div></footer>
+      <footer className="landing-footer"><div className="footer-brand"><span className="brand-seal">✣</span><div><strong>webclerk</strong><span>Evidence. Integrity. Your signature.</span></div></div><blockquote>“A good clerk files what is true, not what is convenient.”</blockquote><div className="footer-links"><a href="/demo">Demo</a><a href="https://github.com/ThunderKhan/webclerk" target="_blank" rel="noreferrer">GitHub</a><a href="https://www.linkedin.com/in/the-ayan-khan/" target="_blank" rel="noreferrer">LinkedIn</a><a href="https://github.com/ThunderKhan/webclerk/blob/main/docs/ARCHITECTURE.md" target="_blank" rel="noreferrer">Architecture</a><a href="https://github.com/ThunderKhan/webclerk/blob/main/docs/WEBMCP.md" target="_blank" rel="noreferrer">WebMCP</a></div></footer>
     </div>
   );
 }
