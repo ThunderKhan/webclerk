@@ -1,14 +1,31 @@
+<div align="center">
+
 # webclerk
 
-> **Never guess on consequential forms.**
+### Never guess on consequential forms.
+
+[![CI](https://github.com/ThunderKhan/webclerk/actions/workflows/ci.yml/badge.svg)](https://github.com/ThunderKhan/webclerk/actions/workflows/ci.yml)
+![WebMCP](https://img.shields.io/badge/WebMCP-semantic%20tools-d7b76a)
+![Tools](https://img.shields.io/badge/tools-9-2f81f7)
+![Read / Write](https://img.shields.io/badge/read%20%2F%20write-7%20%2F%202-8250df)
+![Tests](https://img.shields.io/badge/tests-25%20passing-2ea44f)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
+![License](https://img.shields.io/badge/license-MIT-2ea44f)
+
+Evidence-backed WebMCP automation that preserves uncertainty and keeps consequential decisions human-controlled.
+
+**OpenAI WebMCP Challenge · Trust-first browser automation · Human-in-the-loop**
+
+[Live site](https://webclerk.vercel.app/) · [WebMCP demo](https://webclerk.vercel.app/demo) · [WebMCP implementation](webmcp/index.ts) · [Architecture](docs/ARCHITECTURE.md) · [Verification](docs/VERIFICATION.md) · [Docs](docs/WEBMCP.md)
+
+</div>
+
+---
 
 > ### Judges: start with the WebMCP implementation
 > **[`webmcp/index.ts`](webmcp/index.ts)** is the actual semantic tool surface registered with `document.modelContext`.  
 > **[`webmcp/domain.ts`](webmcp/domain.ts)** contains the deterministic evidence, validation, conflict, and human-authority rules.  
 > The React/Vite experience is intentionally secondary and lives under **[`apps/web/`](apps/web/)**.
-
-**Landing page:** https://webclerk.vercel.app/  
-**Live WebMCP demo:** https://webclerk.vercel.app/demo
 
 webclerk is a WebMCP-powered trust layer for consequential web forms. It lets an agent inspect the same application the human sees, read structured supporting evidence, fill only values that can be verified, preserve uncertainty, surface conflicts and stale evidence, and prepare the application without taking over truthfulness attestations or final submission.
 
