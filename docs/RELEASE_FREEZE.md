@@ -1,76 +1,122 @@
 # Hackathon Release Freeze
 
-**Status:** FROZEN  
+**Status:** READY TO FREEZE AFTER FINAL REHEARSAL  
 **Date:** 1 September 2026  
-**Scope:** WebMCP implementation, deterministic evidence engine, trust rules, and core scholarship demo behavior.
+**Scope:** generalized WebMCP tool factory, deterministic trust engine, authority model, scholarship demo, insurance proof, security annotations, and adversarial evals.
 
-## Freeze decision
+## Current release baseline
 
-The WebMCP implementation is frozen for the hackathon because the core end-to-end behavior has been verified in production.
+The implementation now has two executable consequential workflows powered by the same trust architecture:
 
-A successful ChatGPT desktop run using **5.6 Sol Medium** demonstrated:
+1. scholarship application — primary polished demo;
+2. motor-insurance claim — live generalization proof.
 
-- natural-language discovery of the bulk evidence-backed preparation intent;
-- selection of the site's semantic WebMCP write capability;
-- explicit user approval before draft mutation;
-- exactly six safe WebMCP edits;
-- completion change from 70% to 96%;
-- verified count change from 3 to 9;
-- six edits visibly attributed as **WebMCP · Agent via WebMCP**;
-- 11 applicant confirmations preserved;
-- two blockers surfaced;
-- zero unsupported agent edits;
-- zero consequential agent actions;
-- stale/conflicting income evidence left untouched;
-- deterministic preflight remaining blocked;
-- human-only truthfulness declaration;
-- no `submit_application` capability.
+The release baseline includes:
 
-Independent direct-browser testing has also verified the underlying WebMCP registration, invocation, state mutation, preflight, and `HUMAN_ACTION_REQUIRED` declaration boundary.
+- exactly nine semantic WebMCP tools;
+- 7 read tools / 2 write tools;
+- workflow-configurable `WebMcpWorkflowContext`;
+- workflow-configurable `TrustRules`;
+- explicit `AGENT_AUTHORITY` contract;
+- granular writes authorized before mutation;
+- `untrustedContentHint` on evidence-derived tool output;
+- runtime-time evidence validity with deterministic injected clocks in tests;
+- adversarial authority evals;
+- no final submission capability;
+- human-only consequential attestations;
+- CI-enforced test and production-build gate.
 
-## What is frozen
+## Primary scholarship baseline
 
-Do not change before submission unless a reproducible correctness regression is found:
+From reset:
 
-- the nine-tool WebMCP surface;
-- tool names and read/write semantics;
-- `fill_verified_fields_from_evidence` behavior;
-- declaration protection;
-- deterministic evidence acceptance rules;
-- stale-evidence rule;
-- conflict rule;
-- field status model;
-- provenance model;
-- Agent Decision Summary semantics;
-- reset seed data;
-- deliberate ₹3,50,000 vs ₹3,20,000 conflict;
-- absence of autonomous submission.
+- completion: 70%;
+- verified: 3;
+- review: 11;
+- blocked: 2;
+- incomplete: 7.
 
-## Allowed changes
+A successful evidence-backed bulk preparation should:
 
-Safe pre-submission changes are limited to:
+- apply exactly six safe WebMCP edits;
+- move completion from 70% to 96%;
+- move verified fields from 3 to 9;
+- preserve 11 applicant-confirmation items;
+- preserve two evidence blockers;
+- produce zero unsupported agent edits;
+- produce zero consequential agent actions;
+- retain the ₹3,50,000 vs ₹3,20,000 income conflict;
+- retain the stale income certificate;
+- keep the declaration human-only;
+- expose no submission tool.
 
-- documentation;
-- video/submission copy;
-- non-functional typo fixes;
-- clearly isolated presentation fixes that cannot change the WebMCP demo behavior.
+## Insurance generalization baseline
 
-Avoid visual churn immediately before recording.
+The live route is:
 
-## Known MVP boundary
+`https://webclerk.vercel.app/proof/insurance`
 
-The five demo PDFs are fictional and human-inspectable, but the MVP does not dynamically OCR or parse arbitrary uploaded PDFs. Evidence facts are pre-extracted and deterministic by design.
+The same semantic tool factory should:
 
-This is intentional. The hackathon contribution is the trusted shared human-agent form workspace and semantic WebMCP contract, not a document-extraction benchmark.
+- expose the motor-insurance application context;
+- identify four safe blank evidence-backed values;
+- safely fill claimant name, policy number, vehicle registration, and incident date;
+- preserve the ₹85,000 vs ₹78,500 repair-estimate conflict;
+- preserve claimant-only fault admission;
+- preserve claimant-only first-person narrative;
+- reject the fraud declaration as a human-only action;
+- expose no submission capability.
 
-## Runtime note
+## Security baseline
 
-The verified natural-language write flow uses **ChatGPT desktop with 5.6 Sol Medium**. During development, lighter runtimes could discover the Site Tools surface but did not consistently execute semantic writes.
+The following must remain true:
 
-For judging and recording, use the verified environment rather than changing product behavior to accommodate unsupported or inconsistent runtimes.
+- unsupported granular values are refused before mutation;
+- stale evidence cannot authorize an agent write;
+- unresolved conflicts cannot be silently overwritten by the evidence-authorized path;
+- confirmation-only facts cannot be promoted into evidence-backed agent facts;
+- human-only fields return `HUMAN_ACTION_REQUIRED`;
+- evidence-derived outputs use `untrustedContentHint`;
+- evidence content cannot extend the registered capability surface;
+- submission remains absent rather than merely discouraged.
 
-## Final gate before recording
+See `docs/SECURITY.md` and `docs/EVALS.md`.
 
-Run the checklist in `docs/VERIFICATION.md` once from a fresh chat after usage credits are available.
+## Freeze trigger
 
-If it matches the frozen baseline, record immediately. Do not perform additional refactors between the passing rehearsal and the recording.
+The release becomes **FROZEN** after one final clean rehearsal confirms:
+
+- GitHub Actions is green;
+- production Vercel deployment is green;
+- scholarship WebMCP flow matches the baseline;
+- insurance route loads and exposes the same nine-tool surface;
+- declaration/fraud-attestation boundaries remain intact;
+- recording environment is stable.
+
+After that point, do not refactor core architecture before submission.
+
+## Allowed post-freeze changes
+
+Only land changes that are necessary for:
+
+- a reproducible correctness bug;
+- broken deployment;
+- inaccurate documentation;
+- recording-blocking presentation defects;
+- mandatory submission compliance.
+
+Avoid feature expansion and visual churn after the clean rehearsal.
+
+## Known prototype boundary
+
+The demo uses fictional, human-inspectable evidence with deterministic pre-extracted facts. Arbitrary OCR or document parsing is intentionally outside the hackathon core.
+
+That boundary is deliberate: webclerk is demonstrating the **trust, evidence, authority, and shared-state layer after evidence exists**, not competing as a document-extraction benchmark.
+
+A production deployment would additionally require authentication, server-side enforcement, encrypted/durable evidence storage, durable audit logs, privacy controls, file scanning, and domain-specific compliance.
+
+## Final gate
+
+Use `docs/VERIFICATION.md` as the canonical final rehearsal checklist.
+
+When every release-critical item passes, record the demo immediately and avoid further architectural changes.
