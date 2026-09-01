@@ -48,6 +48,19 @@ describe("WebMCP tool metadata", () => {
     }
   });
 
+  it("keeps agent-facing metadata concise", () => {
+    const tools = createWebMcpTools(makeBridge());
+    for (const tool of tools) {
+      expect(tool.name.length).toBeLessThanOrEqual(40);
+      expect(tool.description.length).toBeLessThanOrEqual(500);
+
+      const properties = (tool.inputSchema?.properties ?? {}) as Record<string, { description?: string }>;
+      for (const property of Object.values(properties)) {
+        if (property.description) expect(property.description.length).toBeLessThanOrEqual(150);
+      }
+    }
+  });
+
   it("gives every tool a human-readable title", () => {
     const tools = createWebMcpTools(makeBridge());
     for (const tool of tools) {
