@@ -148,14 +148,78 @@ describe("WebMCP tool adapter", () => {
     expect(mutation).not.toHaveBeenCalledWith("institution", "Deen Dayal Upadhyaya Gorakhpur University");
   });
 
-  it("allows a normal granular agent mutation through the shared bridge", async () => {
+  it("allows an exact current evidence-backed granular mutation", async () => {
     const mutation = vi.fn(() => ({ ok: true, message: "updated" }));
     const bridge = makeBridge();
     bridge.setFieldFromAgent = mutation;
     const tool = createWebMcpTools(bridge).find((item) => item.name === "set_field_value")!;
-    const payload = parseToolResult(await tool.execute({ fieldId: "institution", value: "Example University" }));
+    const payload = parseToolResult(await tool.execute({
+      fieldId: "programme",
+      value: "Bachelor of Computer Applications",
+    }));
     expect(payload.ok).toBe(true);
-    expect(mutation).toHaveBeenCalledWith("institution", "Example University");
+    expect(mutation).toHaveBeenCalledWith("programme", "Bachelor of Computer Applications");
+  });
+
+  it("rejects an unsupported granular value before mutation", async () => {
+    const mutation = vi.fn(() => ({ ok: true, message: "should not happen" }));
+    const bridge = makeBridge();
+    bridge.setFieldFromAgent = mutation;
+    const tool = createWebMcpTools(bridge).find((item) => item.name === "set_field_value")!;
+    const payload = parseToolResult(await tool.execute({ fieldId: "institution", value: "Example University" }));
+    expect(payload.ok).toBe(false);
+    expect(payload.code).toBe("UNSUPPORTED_VALUE");
+    expect(mutation).not.toHaveBeenCalled();
+  });
+
+  it("rejects stale evidence before mutation", async () => {
+    const mutation = vi.fn(() => ({ ok: true, message: "should not happen" }));
+    const bridge = makeBridge();
+    bridge.setFieldFromAgent = mutation;
+    const tool = createWebMcpTools(bridge).find((item) => item.name === "set_field_value")!;
+    const payload = parseToolResult(await tool.execute({ fieldId: "family_income", value: "320000" }));
+    expect(payload.ok).toBe(false);
+    expect(payload.code).toBe("STALE_EVIDENCE");
+    expect(mutation).not.toHaveBeenCalled();
+  });
+
+  it("refuses to resolve an existing evidence conflict through the agent", async () => {
+    const raw = initialFields.map((field) => field.id === "institution" ? { ...field, value: "Example University" } : { ...field });
+    const mutation = vi.fn(() => ({ ok: true, message: "should not happen" }));
+    const bridge: WebMcpBridge = {
+      getFields: () => deriveFields(raw, evidenceDocuments),
+      setFieldFromAgent: mutation,
+    };
+    const tool = createWebMcpTools(bridge).find((item) => item.name === "set_field_value")!;
+    const payload = parseToolResult(await tool.execute({
+      fieldId: "institution",
+      value: "Deen Dayal Upadhyaya Gorakhpur University",
+    }));
+    expect(payload.ok).toBe(false);
+    expect(payload.code).toBe("CONFLICT_REQUIRES_HUMAN");
+    expect(mutation).not.toHaveBeenCalled();
+  });
+
+  it("keeps confirmation-only fields under applicant authority", async () => {
+    const mutation = vi.fn(() => ({ ok: true, message: "should not happen" }));
+    const bridge = makeBridge();
+    bridge.setFieldFromAgent = mutation;
+    const tool = createWebMcpTools(bridge).find((item) => item.name === "set_field_value")!;
+    const payload = parseToolResult(await tool.execute({ fieldId: "mode", value: "Full-time" }));
+    expect(payload.ok).toBe(false);
+    expect(payload.code).toBe("HUMAN_CONFIRMATION_REQUIRED");
+    expect(mutation).not.toHaveBeenCalled();
+  });
+
+  it("rejects unknown fields without touching application state", async () => {
+    const mutation = vi.fn(() => ({ ok: true, message: "should not happen" }));
+    const bridge = makeBridge();
+    bridge.setFieldFromAgent = mutation;
+    const tool = createWebMcpTools(bridge).find((item) => item.name === "set_field_value")!;
+    const payload = parseToolResult(await tool.execute({ fieldId: "not_a_real_field", value: "anything" }));
+    expect(payload.ok).toBe(false);
+    expect(payload.code).toBe("FIELD_NOT_FOUND");
+    expect(mutation).not.toHaveBeenCalled();
   });
 
   it("keeps the final applicant declaration human-only", async () => {
