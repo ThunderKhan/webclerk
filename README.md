@@ -11,24 +11,64 @@ The current prototype uses a fictional Indian scholarship workflow to demonstrat
 
 > **Prototype notice:** the scholarship, department, application identifiers, PDFs, and government-style interface in this repository are fictional. webclerk is not affiliated with or endorsed by the Government of India or any public authority.
 
+## Verified production flow
+
+The natural-language WebMCP path has been verified end to end in the ChatGPT desktop built-in browser using **5.6 Sol Medium**.
+
+Starting from the deterministic reset state:
+
+- completion: **70%**
+- verified: **3**
+- review: **11**
+- blocked: **2**
+- incomplete: **7**
+
+Prompt:
+
+> Fill everything you can verify from my documents. Don't guess anything.
+
+The agent identifies six safe evidence-backed edits, asks for approval before the write, then invokes the site's bulk semantic write capability. After approval:
+
+- completion becomes **96%**;
+- verified becomes **9**;
+- **6 evidence-backed agent edits** are recorded;
+- **11 applicant confirmations** remain preserved;
+- **2 blockers** remain surfaced;
+- unsupported agent edits remain **0**;
+- consequential agent actions remain **0**;
+- history attributes the six changes as **WebMCP · Agent via WebMCP**.
+
+The six WebMCP edits are:
+
+- programme of study;
+- current year of study;
+- enrollment number;
+- previous academic-year percentage;
+- state of domicile;
+- domicile certificate number.
+
+The agent deliberately leaves the stale/conflicting income evidence, confirmation-only fields, truthfulness declaration, and final submission untouched.
+
+> **Demo environment note:** use a model/runtime that supports ChatGPT Site Tools write execution. The verified production run used **5.6 Sol Medium**. Lighter runtimes tested during development could discover tools but did not consistently execute the WebMCP write path.
+
 ## For judges
 
-Start at the landing page for the product story, then open the live WebMCP workspace at:
+Open the live workspace at:
 
 https://webclerk.netlify.app/demo
 
-Use these prompts in order:
+Use this sequence:
 
 1. **"Fill everything you can verify from my documents. Don't guess anything."**
-2. **"Why didn't you fill mode of study?"**
-3. **"Check everything before I submit."**
-4. **"Complete the declaration for me."**
+2. Approve the requested site write.
+3. **"Why didn't you fill mode of study?"**
+4. **"Check everything before I submit."**
+5. **"Complete the declaration for me."**
 
 Expected behavior:
 
-- `get_application_state` reports six safe evidence-backed edits and recommends `fill_verified_fields_from_evidence`;
-- the agent uses `fill_verified_fields_from_evidence` to fill those six blanks through WebMCP;
-- those edits are visibly attributed to the WebMCP agent;
+- the bulk preparation request routes to `fill_verified_fields_from_evidence`;
+- six safe fields are written through WebMCP and visibly attributed to the agent;
 - `mode of study` remains unresolved because the enrollment certificate does not explicitly state it;
 - the form preserves the ₹3,50,000 application value while surfacing the ₹3,20,000 evidence conflict;
 - the income certificate remains blocked because it is outside the accepted 12-month validity window;
@@ -40,31 +80,13 @@ Expected behavior:
 
 webclerk is not using WebMCP as a wrapper around a normal chatbot feature. The page itself exposes semantic capabilities such as `get_application_state`, `fill_verified_fields_from_evidence`, `list_evidence`, `inspect_field`, and `run_preflight` through `document.modelContext.registerTool(...)`.
 
-That means an external agent can work with **application concepts directly** instead of relying on brittle DOM scraping, screen coordinates, or a one-off integration. Human and agent operate over the same browser-visible state, and every agent mutation goes back through the page's deterministic evidence rules.
+That means an external agent can work with **application concepts directly** instead of relying on brittle DOM scraping, screen coordinates, or a one-off integration. Human and agent operate over the same browser-visible state, and every WebMCP mutation goes back through the page's deterministic evidence rules.
 
 This enables a collaboration model where:
 
 - the **site** defines what evidence and actions mean;
 - the **agent** can prepare reversible, non-consequential edits;
-- the **human** retains authority over ambiguous facts, truthfulness attestations, and final submission.
-
-## The core demo
-
-The scholarship starts partially complete. Six safe evidence-backed fields are intentionally blank so the agent can make visible progress:
-
-- programme of study;
-- current year of study;
-- enrollment number;
-- previous academic-year percentage;
-- state of domicile;
-- domicile certificate number.
-
-The demo also contains two deliberate financial problems:
-
-- the form says annual family income is **₹3,50,000**;
-- the income certificate says **₹3,20,000** and is older than the accepted 12-month window.
-
-Most autofill systems optimize for completion. webclerk optimizes for **justified completion**.
+- the **human** explicitly approves writes and retains authority over ambiguous facts, truthfulness attestations, and final submission.
 
 ## Trust invariants
 
@@ -88,42 +110,19 @@ webclerk exposes exactly nine semantic tools:
 - `check_consistency`
 - `run_preflight`
 
-There is deliberately **no** `submit_application` tool.
+The Site Tools surface classifies them as **7 read tools and 2 write tools**. `fill_verified_fields_from_evidence` and `set_field_value` are explicitly annotated as writes. There is deliberately **no** `submit_application` tool.
 
 ### Bulk verified preparation
 
-`fill_verified_fields_from_evidence` is the preferred semantic capability for the natural user intent:
+`fill_verified_fields_from_evidence` is the preferred semantic capability for:
 
 > Fill everything you can verify from my documents. Don't guess anything.
 
-`get_application_state` makes the intent routing explicit by returning:
-
-- `safeEvidenceBackedEditsAvailable`;
-- `safeEvidenceBackedFieldIds`;
-- `recommendedNextAction`.
-
-At the reset state those values are six safe edits and:
-
-```text
-recommendedNextAction = fill_verified_fields_from_evidence
-```
-
-The bulk tool applies only incomplete fields with current, acceptable mapped evidence. It skips:
-
-- already completed fields;
-- confirmation-only fields;
-- stale evidence;
-- unresolved conflicts;
-- the applicant declaration;
-- anything without acceptable evidence.
-
-Because the writes go through webclerk's agent bridge, they are recorded as WebMCP-agent changes and remain reversible.
-
-`set_field_value` and `suggest_field_value` remain available for one-field follow-ups, but are explicitly not the preferred path for bulk preparation.
+At reset, `get_application_state` reports six safe edits and recommends the bulk tool. The bulk tool applies only incomplete fields with current, acceptable mapped evidence and skips confirmation-only fields, stale evidence, unresolved conflicts, the declaration, and unsupported values.
 
 ### Human authority boundary
 
-`set_field_value` rejects attempts to complete the applicant declaration with:
+A direct agent attempt to complete the applicant declaration is rejected with:
 
 ```text
 HUMAN_ACTION_REQUIRED
@@ -135,13 +134,6 @@ The preferred preparation flow is:
 get_application_state
   → fill_verified_fields_from_evidence
   → run_preflight
-```
-
-For a granular one-field edit:
-
-```text
-suggest_field_value
-  → set_field_value
 ```
 
 ## Architecture
@@ -176,49 +168,11 @@ The demo includes five fictional source PDFs:
 - `Income_Certificate.pdf`
 - `Domicile_Certificate.pdf`
 
-Each evidence record exposes:
-
-- document type;
-- issue metadata;
-- human-inspectable PDF URL;
-- pre-extracted structured facts;
-- validity status;
-- whether the evidence is acceptable for verification.
-
-### MVP limitation
-
-The included PDFs are **not parsed dynamically**. The prototype uses a fixed, pre-extracted structured evidence set so the trust and WebMCP behavior can remain deterministic and easy to audit. Arbitrary PDF upload, OCR, document classification, and extraction are intentionally outside this hackathon MVP.
-
-A production ingestion layer could sit before the current evidence engine:
-
-```text
-PDF / OCR / document parser
-        ↓
-Normalized evidence facts
-        ↓
-Current webclerk evidence engine
-```
-
-## What the UI makes visible
-
-The interface exposes more than a completion percentage. It shows:
-
-- verified, confirmation-required, blocked, and incomplete counts;
-- an **Agent Decision Summary**;
-- evidence-backed agent edit count;
-- unresolved applicant confirmations;
-- blockers surfaced;
-- unsupported agent edit count;
-- consequential agent action count;
-- provenance from field → PDF → evidence fact → validity → decision rule → result;
-- agent-vs-applicant change history;
-- direct links to fictional source PDFs;
-- deterministic preflight;
-- a human-only declaration/submission boundary.
+The PDFs are human-inspectable, while the MVP uses a fixed pre-extracted structured evidence set so the trust and WebMCP behavior stays deterministic and auditable. Arbitrary PDF ingestion/OCR is intentionally outside the hackathon MVP.
 
 ## Broader applications
 
-The scholarship is a reference workflow, not the limit of the idea. The same pattern applies to consequential forms such as:
+The scholarship is a reference workflow. The same trust pattern applies to:
 
 - insurance claims;
 - visa applications;
@@ -233,23 +187,23 @@ The scholarship is a reference workflow, not the limit of the idea. The same pat
 The prototype has been exercised in:
 
 - **Brave with WebMCP enabled** for direct browser-level tool discovery and invocation;
-- **ChatGPT desktop built-in browser** for natural-language agent orchestration;
+- **ChatGPT desktop built-in browser with 5.6 Sol Medium** for natural-language WebMCP orchestration and approved write execution;
 - **Netlify production deployment** at https://webclerk.netlify.app/demo.
 
-Validated behavior includes:
+Verified behavior includes:
 
-- discovery of the semantic tool surface;
-- state reads;
+- discovery of exactly nine semantic tools;
+- correct 7-read / 2-write classification;
+- natural-language selection of the semantic bulk-fill tool;
+- explicit user approval before the write;
 - evidence-backed shared-state mutation;
-- visible agent attribution;
+- visible **WebMCP · Agent via WebMCP** attribution;
 - conflict detection;
 - stale-evidence detection;
 - uncertainty preservation;
 - deterministic preflight;
-- declaration rejection with `HUMAN_ACTION_REQUIRED` at the WebMCP boundary;
-- no autonomous submit tool.
-
-The explicit bulk-intent version must still pass the final production rehearsal before submission.
+- declaration rejection with `HUMAN_ACTION_REQUIRED`;
+- no autonomous submit capability.
 
 ## Run locally
 
@@ -266,32 +220,33 @@ npm run build
 npm run preview
 ```
 
-WebMCP itself requires a supported browser/agent environment. In an ordinary browser the human interface remains functional and reports WebMCP as unavailable instead of failing startup.
-
 ## Project docs
 
-- [`docs/PRD.md`](docs/PRD.md) — product requirements and success criteria
-- [`docs/MVP.md`](docs/MVP.md) — hard scope boundary and acceptance criteria
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — application and data architecture
-- [`docs/WEBMCP.md`](docs/WEBMCP.md) — WebMCP contract and tool semantics
-- [`docs/DESIGN.md`](docs/DESIGN.md) — UX4G/GIGW-informed visual and accessibility specification
-- [`docs/DEMO.md`](docs/DEMO.md) — three-minute judging/demo narrative
-- [`docs/VERIFICATION.md`](docs/VERIFICATION.md) — real-browser verification checklist
-- [`docs/BUILD_PLAN.md`](docs/BUILD_PLAN.md) — milestone sequence and scope kill-list
+- [`docs/PRD.md`](docs/PRD.md) — product requirements
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — architecture and data model
+- [`docs/WEBMCP.md`](docs/WEBMCP.md) — WebMCP contract
+- [`docs/VERIFICATION.md`](docs/VERIFICATION.md) — browser and release verification
+- [`docs/DEMO.md`](docs/DEMO.md) — exact sub-three-minute demo script
+- [`docs/RECORDING_PLAN.md`](docs/RECORDING_PLAN.md) — shot-by-shot recording plan
+- [`docs/SUBMISSION.md`](docs/SUBMISSION.md) — ready-to-paste submission copy
+- [`docs/RELEASE_FREEZE.md`](docs/RELEASE_FREEZE.md) — frozen implementation baseline
 
 ## Status
 
 - [x] Product foundation
-- [x] Judge-facing landing page
-- [x] Static government-style application workspace
 - [x] Deterministic evidence and validation logic
-- [x] WebMCP tool layer
+- [x] WebMCP semantic tool layer
 - [x] Trust UX and provenance
-- [x] Real-browser WebMCP verification
-- [x] Natural-language agent rehearsal
-- [ ] Final explicit bulk-intent production rehearsal
-- [ ] Three consecutive clean final runs
-- [ ] Demo video and submission
+- [x] Direct browser-level WebMCP verification
+- [x] Natural-language semantic tool selection
+- [x] Approved WebMCP write execution in production
+- [x] Agent-vs-applicant provenance
+- [x] Conflict/stale-evidence preflight
+- [x] Human-only declaration boundary
+- [x] WebMCP implementation frozen
+- [ ] One final clean rehearsal after credits reset
+- [ ] Record and publish final demo video
+- [ ] Submit hackathon entry
 
 ## License
 
