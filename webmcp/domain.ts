@@ -40,7 +40,7 @@ export interface PreflightResult {
   missingRequired: string[];
 }
 
-export const DEMO_NOW = new Date("2026-08-31T00:00:00+05:30");
+export const TEST_REFERENCE_NOW = new Date("2026-08-31T00:00:00+05:30");
 const TWELVE_MONTHS_MS = 365 * 24 * 60 * 60 * 1000;
 
 export const evidenceFacts: FieldFact[] = [
@@ -90,7 +90,7 @@ function parseIssuedDate(document: EvidenceDocument) {
   return Number.isNaN(parsed.valueOf()) ? undefined : parsed;
 }
 
-export function isEvidenceStale(document: EvidenceDocument, now = DEMO_NOW) {
+export function isEvidenceStale(document: EvidenceDocument, now = new Date()) {
   if (!document.maxAgeMonths) return false;
   const issued = parseIssuedDate(document);
   if (!issued) return false;
@@ -98,7 +98,7 @@ export function isEvidenceStale(document: EvidenceDocument, now = DEMO_NOW) {
   return now.valueOf() - issued.valueOf() > maxAge;
 }
 
-export function deriveField(field: ApplicationField, evidence: EvidenceDocument[], now = DEMO_NOW): ApplicationField {
+export function deriveField(field: ApplicationField, evidence: EvidenceDocument[], now = new Date()): ApplicationField {
   const value = field.value.trim();
   if (!value) {
     return {
@@ -158,11 +158,11 @@ export function deriveField(field: ApplicationField, evidence: EvidenceDocument[
   };
 }
 
-export function deriveFields(fields: ApplicationField[], evidence: EvidenceDocument[], now = DEMO_NOW) {
+export function deriveFields(fields: ApplicationField[], evidence: EvidenceDocument[], now = new Date()) {
   return fields.map((field) => deriveField(field, evidence, now));
 }
 
-export function inspectField(fieldId: string, fields: ApplicationField[], evidence: EvidenceDocument[], now = DEMO_NOW): FieldInspection | undefined {
+export function inspectField(fieldId: string, fields: ApplicationField[], evidence: EvidenceDocument[], now = new Date()): FieldInspection | undefined {
   const field = fields.find((item) => item.id === fieldId);
   if (!field) return undefined;
   const derived = deriveField(field, evidence, now);
@@ -176,7 +176,7 @@ export function inspectField(fieldId: string, fields: ApplicationField[], eviden
   };
 }
 
-export function suggestFieldValue(fieldId: string, evidence: EvidenceDocument[], now = DEMO_NOW) {
+export function suggestFieldValue(fieldId: string, evidence: EvidenceDocument[], now = new Date()) {
   const match = evidenceForField(fieldId, evidence);
   if (!match || isEvidenceStale(match.document, now)) return undefined;
   return {
@@ -186,19 +186,19 @@ export function suggestFieldValue(fieldId: string, evidence: EvidenceDocument[],
   };
 }
 
-export function findMissingInformation(fields: ApplicationField[], evidence: EvidenceDocument[], now = DEMO_NOW) {
+export function findMissingInformation(fields: ApplicationField[], evidence: EvidenceDocument[], now = new Date()) {
   return deriveFields(fields, evidence, now).filter(
     (field) => field.required && (field.status === "empty" || field.status === "needs_confirmation" || field.status === "blocked"),
   );
 }
 
-export function checkConsistency(fields: ApplicationField[], evidence: EvidenceDocument[], now = DEMO_NOW) {
+export function checkConsistency(fields: ApplicationField[], evidence: EvidenceDocument[], now = new Date()) {
   return deriveFields(fields, evidence, now)
     .filter((field) => field.status === "blocked")
     .map((field) => ({ fieldId: field.id, label: field.label, issue: field.issue ?? "Blocked" }));
 }
 
-export function runPreflight(fields: ApplicationField[], evidence: EvidenceDocument[], now = DEMO_NOW): PreflightResult {
+export function runPreflight(fields: ApplicationField[], evidence: EvidenceDocument[], now = new Date()): PreflightResult {
   const derived = deriveFields(fields, evidence, now);
   const critical: PreflightIssue[] = [];
   const warnings: PreflightIssue[] = [];
@@ -278,6 +278,7 @@ export function makeChangeRecord(
   nextValue: string,
   origin: ChangeOrigin,
   sequence: number,
+  now = new Date(),
 ): ChangeRecord {
   return {
     id: `change-${sequence}`,
@@ -285,6 +286,6 @@ export function makeChangeRecord(
     previousValue,
     nextValue,
     origin,
-    timestamp: new Date(DEMO_NOW.valueOf() + sequence * 1000).toISOString(),
+    timestamp: new Date(now.valueOf() + sequence * 1000).toISOString(),
   };
 }
