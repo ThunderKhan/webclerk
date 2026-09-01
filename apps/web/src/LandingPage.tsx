@@ -57,7 +57,16 @@ function LandingPage() {
             <span className="section-kicker">EVIDENCE &gt; CONFIDENCE</span>
             <h1>Never guess on consequential forms.</h1>
             <p>A WebMCP-powered trust layer that lets agents prepare applications from evidence, preserve uncertainty, surface conflicts, and leave consequential decisions to the human.</p>
-            <div className="hero-actions"><a className="primary-btn" href="/demo">Open the live demo</a><a className="ghost-btn" href="/proof/insurance">See insurance proof</a><a className="ghost-btn" href="https://github.com/ThunderKhan/webclerk" target="_blank" rel="noreferrer">View on GitHub</a></div>
+            <div className="hero-actions">
+              <details className="demo-picker">
+                <summary className="primary-btn">Explore live demos <span aria-hidden="true">⌄</span></summary>
+                <div className="demo-picker-menu">
+                  <a href="/demo"><strong>Scholarship application</strong><span>Primary WebMCP workflow · evidence-backed preparation</span></a>
+                  <a href="/proof/insurance"><strong>Insurance claim</strong><span>Second workflow · same trust engine and tool layer</span></a>
+                </div>
+              </details>
+              <a className="ghost-btn" href="https://github.com/ThunderKhan/webclerk" target="_blank" rel="noreferrer">View on GitHub</a>
+            </div>
             <div className="hero-proof"><span>✓ Evidence-backed</span><span>✓ Semantic WebMCP tools</span><span>✓ Human-first boundaries</span></div>
           </div>
           <aside className="hero-resource-panel" aria-label="Project resources">
@@ -66,7 +75,6 @@ function LandingPage() {
             <p>webclerk exposes explicit semantic capabilities instead of relying on brittle DOM scraping or coordinate-based automation.</p>
             <div className="resource-actions">
               <a className="resource-btn" href="https://github.com/ThunderKhan/webclerk" target="_blank" rel="noreferrer"><span>GitHub</span><small>Source, tests, architecture</small></a>
-              <a className="resource-btn" href="/proof/insurance"><span>Insurance proof</span><small>Same trust engine, second live workflow</small></a>
               <a className="resource-btn" href="https://github.com/ThunderKhan/webclerk/blob/main/docs/WEBMCP.md" target="_blank" rel="noreferrer"><span>Read WebMCP documentation</span><small>Tool contracts and trust boundaries</small></a>
             </div>
             <div className="resource-metrics" aria-label="WebMCP capability summary">
