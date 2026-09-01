@@ -35,6 +35,19 @@ describe("WebMCP tool metadata", () => {
     }
   });
 
+  it("marks evidence-derived outputs as untrusted content", () => {
+    const byName = new Map(createWebMcpTools(makeBridge()).map((tool) => [tool.name, tool]));
+    for (const name of [
+      "inspect_field",
+      "list_evidence",
+      "suggest_field_value",
+      "check_consistency",
+      "run_preflight",
+    ]) {
+      expect(byName.get(name)?.annotations).toMatchObject({ untrustedContentHint: true });
+    }
+  });
+
   it("gives every tool a human-readable title", () => {
     const tools = createWebMcpTools(makeBridge());
     for (const tool of tools) {
