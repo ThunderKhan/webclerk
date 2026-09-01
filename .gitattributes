@@ -1,0 +1,6 @@
+# Keep GitHub language statistics focused on the WebMCP core rather than the supporting demo frontend.
+apps/web/** linguist-vendored
+
+# Ignore generated output if it is ever committed.
+dist/** linguist-generated
+coverage/** linguist-generated
