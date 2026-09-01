@@ -7,10 +7,19 @@ interface WebMcpToolResult {
   content: WebMcpToolResultContent[];
 }
 
+interface WebMcpToolAnnotations {
+  readOnlyHint?: boolean;
+  destructiveHint?: boolean;
+  idempotentHint?: boolean;
+  untrustedContentHint?: boolean;
+}
+
 interface WebMcpToolDefinition {
   name: string;
+  title?: string;
   description: string;
   inputSchema?: Record<string, unknown>;
+  annotations?: WebMcpToolAnnotations;
   execute: (input?: Record<string, unknown>) => Promise<WebMcpToolResult> | WebMcpToolResult;
 }
 
