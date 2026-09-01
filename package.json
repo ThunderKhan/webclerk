@@ -2,23 +2,11 @@
   "name": "webclerk",
   "private": true,
   "version": "0.2.0",
-  "type": "module",
+  "workspaces": ["apps/web"],
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "test": "vitest run",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "@vitejs/plugin-react": "latest",
-    "vite": "latest",
-    "typescript": "latest",
-    "react": "latest",
-    "react-dom": "latest"
-  },
-  "devDependencies": {
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
-    "vitest": "latest"
+    "dev": "npm run dev --workspace @webclerk/web",
+    "build": "npm run build --workspace @webclerk/web",
+    "test": "npm run test --workspace @webclerk/web",
+    "preview": "npm run preview --workspace @webclerk/web"
   }
 }
