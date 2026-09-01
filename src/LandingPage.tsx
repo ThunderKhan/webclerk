@@ -1,3 +1,4 @@
+import type { PointerEvent } from "react";
 import "./landing.css";
 import "./landing-overrides.css";
 
@@ -10,8 +11,14 @@ const tools = [
 ] as const;
 
 function LandingPage() {
+  const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    const shell = event.currentTarget;
+    shell.style.setProperty("--pointer-x", `${event.clientX}px`);
+    shell.style.setProperty("--pointer-y", `${event.clientY}px`);
+  };
+
   return (
-    <div id="top" className="landing-shell">
+    <div id="top" className="landing-shell" onPointerMove={handlePointerMove}>
       <header className="landing-nav">
         <a className="landing-brand" href="#top" aria-label="webclerk home"><span className="brand-seal">✣</span><span>webclerk</span></a>
         <nav aria-label="Landing navigation"><a href="#why">Why</a><a href="#trust">Trust</a><a href="#workflow">How it works</a><a href="#tools">Tools</a></nav>
