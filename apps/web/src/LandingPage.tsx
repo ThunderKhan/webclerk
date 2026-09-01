@@ -59,7 +59,12 @@ function LandingPage() {
             <p>A WebMCP-powered trust layer that lets agents prepare applications from evidence, preserve uncertainty, surface conflicts, and leave consequential decisions to the human.</p>
             <div className="hero-actions">
               <details className="demo-picker">
-                <summary className="primary-btn">Explore live demos <span aria-hidden="true">⌄</span></summary>
+                <summary className="primary-btn">
+                  <span>Explore live demos</span>
+                  <svg className="demo-picker-chevron" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                    <path d="M4 6.25 8 10l4-3.75" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </summary>
                 <div className="demo-picker-menu">
                   <a href="/demo"><strong>Scholarship application</strong><span>Primary WebMCP workflow · evidence-backed preparation</span></a>
                   <a href="/proof/insurance"><strong>Insurance claim</strong><span>Second workflow · same trust engine and tool layer</span></a>
