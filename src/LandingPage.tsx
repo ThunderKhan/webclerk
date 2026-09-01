@@ -1,4 +1,5 @@
 import "./landing.css";
+import "./landing-overrides.css";
 
 const tools = [
   ["get_application_state", "read"],
@@ -8,42 +9,12 @@ const tools = [
   ["run_preflight", "read"],
 ] as const;
 
-function ClerkSpider() {
-  return (
-    <svg className="clerk-spider" viewBox="0 0 560 520" role="img" aria-label="Victorian spider clerk mascot holding a document and magnifying glass">
-      <defs>
-        <linearGradient id="coat" x1="0" x2="1"><stop stopColor="#7b2634"/><stop offset="1" stopColor="#3e1821"/></linearGradient>
-        <linearGradient id="gold" x1="0" x2="1"><stop stopColor="#f1cf7b"/><stop offset="1" stopColor="#b78335"/></linearGradient>
-      </defs>
-      <g fill="none" stroke="#d8b56c" strokeWidth="8" strokeLinecap="round">
-        <path d="M214 270C135 245 110 205 74 168M211 292C135 294 105 315 65 342M346 270C425 245 450 205 486 168M349 292C425 294 455 315 495 342"/>
-        <path d="M205 250C145 205 125 158 115 118M355 250C415 205 435 158 445 118M210 310C150 350 120 395 105 435M350 310C410 350 440 395 455 435"/>
-      </g>
-      <ellipse cx="280" cy="310" rx="116" ry="120" fill="#201820" stroke="#e9d7ae" strokeWidth="7"/>
-      <circle cx="280" cy="205" r="98" fill="#2a2028" stroke="#e9d7ae" strokeWidth="7"/>
-      <path d="M195 125h170l-18-78H213z" fill="#161215" stroke="#e9d7ae" strokeWidth="7"/>
-      <path d="M197 119h166" stroke="#b13a4b" strokeWidth="16"/>
-      <ellipse cx="245" cy="197" rx="35" ry="42" fill="#f6efd9"/><ellipse cx="315" cy="197" rx="35" ry="42" fill="#f6efd9"/>
-      <circle cx="250" cy="202" r="10" fill="#111"/><circle cx="310" cy="202" r="10" fill="#111"/>
-      <circle cx="315" cy="197" r="46" fill="none" stroke="url(#gold)" strokeWidth="7"/><path d="M350 225l36 38" stroke="#d8b56c" strokeWidth="8" strokeLinecap="round"/>
-      <path d="M248 250q32 22 64 0" stroke="#d8b56c" strokeWidth="6" strokeLinecap="round"/>
-      <path d="M220 292l60 55 60-55 25 130H195z" fill="url(#coat)" stroke="#e9d7ae" strokeWidth="7"/>
-      <path d="M280 347v72" stroke="#f1cf7b" strokeWidth="8"/><path d="M258 342l22 24 22-24" fill="#111" stroke="#f1cf7b" strokeWidth="5"/>
-      <rect x="330" y="278" width="116" height="142" rx="8" fill="#efe0b7" stroke="#6f4f25" strokeWidth="6" transform="rotate(8 388 349)"/>
-      <path d="M352 313h70M349 336h63M346 359h68M343 382h51" stroke="#6f4f25" strokeWidth="5" strokeLinecap="round" transform="rotate(8 388 349)"/>
-      <circle cx="140" cy="345" r="48" fill="none" stroke="url(#gold)" strokeWidth="9"/><path d="M176 381l46 48" stroke="#d8b56c" strokeWidth="10" strokeLinecap="round"/>
-      <rect x="214" y="437" width="132" height="48" rx="10" fill="#161215" stroke="#d8b56c" strokeWidth="5"/>
-      <text x="280" y="468" textAnchor="middle" fill="#f4df9c" fontSize="22" fontFamily="Georgia, serif" fontWeight="700">WEBCLERK</text>
-    </svg>
-  );
-}
-
 function LandingPage() {
   return (
     <div id="top" className="landing-shell">
       <header className="landing-nav">
         <a className="landing-brand" href="#top" aria-label="webclerk home"><span className="brand-seal">✣</span><span>webclerk</span></a>
-        <nav aria-label="Landing navigation"><a href="#why">Why</a><a href="#workflow">How it works</a><a href="#tools">Tools</a><a href="#trust">Trust</a></nav>
+        <nav aria-label="Landing navigation"><a href="#why">Why</a><a href="#workflow">How it works</a><a href="#trust">Trust</a><a href="#tools">Tools</a></nav>
         <div className="nav-actions"><a className="ghost-btn" href="https://github.com/ThunderKhan/webclerk" target="_blank" rel="noreferrer">GitHub ↗</a><a className="primary-btn small" href="/demo">Open live demo ↗</a></div>
       </header>
 
@@ -56,7 +27,10 @@ function LandingPage() {
             <div className="hero-actions"><a className="primary-btn" href="/demo">▶ Open the live demo</a><a className="ghost-btn" href="https://github.com/ThunderKhan/webclerk" target="_blank" rel="noreferrer">View on GitHub ↗</a></div>
             <div className="hero-proof"><span>✓ Evidence-backed</span><span>✓ Semantic WebMCP tools</span><span>✓ Human-first boundaries</span></div>
           </div>
-          <div className="hero-art"><ClerkSpider/><p className="mascot-caption">A meticulous clerk for the web.<br/><strong>Files what is supported. Flags what is not.</strong></p></div>
+          <div className="hero-art">
+            <img className="clerk-spider" src="/webclerk-spider.webp" alt="Cartoon Victorian spider clerk holding a quill, ledger, sealed document, and magnifying glass" />
+            <p className="mascot-caption">A meticulous clerk for the web.<br/><strong>Files what is supported. Flags what is not.</strong></p>
+          </div>
         </section>
 
         <section id="why" className="landing-section split problem-section">
