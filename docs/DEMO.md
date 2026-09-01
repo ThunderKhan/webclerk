@@ -1,139 +1,164 @@
-# Demo Plan
+# Final Demo Script
 
-## Objective
+## Goal
 
 Tell one complete story in under three minutes:
 
-> A student is completing an important scholarship form. webclerk lets an agent use supporting evidence to help, visibly refuses to guess where evidence is insufficient, and catches problems before the human submits.
+> A consequential form should not be optimized for completion alone. webclerk lets an agent prepare what can be justified by evidence, keeps uncertainty visible, surfaces conflicts, and leaves consequential commitments to the human.
 
-The demo should feel like a product interaction, not an API showcase.
+Target runtime: **2:35–2:50**.
 
-## Target runtime
+Use **ChatGPT desktop + 5.6 Sol Medium** for the recorded agent flow because that is the environment in which the natural-language WebMCP write path was verified end to end.
 
-Aim for **2:30–2:45** so editing, pauses, or network delay do not push the final video beyond three minutes.
+---
 
-## Script
+## 0:00–0:12 — Hook
 
-### 0:00–0:15 — Problem
+**Visual:** webclerk application at reset state, showing 70% completion and the evidence panel.
 
-Show the scholarship application with multiple sections and documents.
+**Narration:**
 
-Narration idea:
+> Most form autofill systems optimize for one thing: filling more fields. That becomes dangerous when the form is consequential and the evidence is incomplete, stale, or contradictory.
 
-> Important forms don't usually fail because people can't type. They fail because people don't know exactly what a field means, which document supports it, or whether two pieces of information conflict.
+---
 
-### 0:15–0:30 — Product setup
+## 0:12–0:27 — What webclerk changes
 
-Show webclerk's form and evidence panel.
+**Visual:** briefly show the WebMCP card / Site Tools list.
 
-Narration:
+**Narration:**
 
-> webclerk turns the form into a shared workspace for the applicant and an AI agent, with the form itself exposing its semantic state through WebMCP.
+> webclerk makes the form itself expose semantic tools through WebMCP. The agent works with application state, evidence, consistency rules, and preflight checks instead of guessing from labels or coordinates.
 
-### 0:30–1:05 — Aha #1: evidence-backed completion
+On-screen proof if convenient:
 
-Prompt:
+- 9 site tools
+- 7 read / 2 write
+- no `submit_application`
+
+---
+
+## 0:27–1:05 — Evidence-backed preparation
+
+**Prompt:**
 
 > Fill everything you can verify from my documents. Don't guess anything.
 
-Expected visible behavior:
+**Visual:** keep the page on the application summary while the agent reasons.
 
-- agent inspects application/evidence;
-- several fields populate;
-- populated values receive provenance;
-- at least one uncertain field stays unresolved;
-- agent-authored changes appear in the UI.
+The agent should identify six safe fields and ask permission before using the site write tool.
 
-Briefly open provenance for one field.
+**Approve the write.**
 
-### 1:05–1:30 — Aha #2: uncertainty
+**Narration while the state updates:**
 
-Prompt:
+> The agent found six fields supported by current accepted evidence. Because this changes the draft, it asks before writing.
 
-> Why didn't you fill this field?
+Then show:
 
-Expected behavior:
+- completion **70% → 96%**
+- verified **3 → 9**
+- Agent Decision Summary: **6 / 11 / 2 / 0 / 0**
 
-- agent inspects the exact field;
-- explains what the application requires;
-- shows the supporting but insufficient/ambiguous evidence;
-- presents a suggestion as `needs_confirmation`, not verified.
+**Narration:**
 
-Human confirms or leaves unresolved.
+> Six fields were written through WebMCP. Eleven applicant confirmations remain. Two evidence blockers remain. Unsupported edits: zero. Consequential actions: zero.
 
-Narration point:
+---
 
-> webclerk treats uncertainty as product state instead of hiding it inside model confidence.
+## 1:05–1:23 — Provenance
 
-### 1:30–2:10 — Aha #3: preflight
+**Visual:** scroll to **Who changed what** and one **Why this status?** panel.
 
-Prompt:
+Show:
+
+- `WebMCP · Agent via WebMCP`
+- source PDF
+- evidence fact
+- evidence validity
+- decision rule
+- verified result
+
+**Narration:**
+
+> Every agent write is attributed and traceable back to the source document, the extracted fact, its validity, and the rule that accepted it.
+
+---
+
+## 1:23–1:42 — Uncertainty is state
+
+**Prompt:**
+
+> Why didn't you fill mode of study?
+
+**Visual:** mode of study remains **Needs confirmation**.
+
+**Narration:**
+
+> The enrollment certificate never explicitly states the study mode, so webclerk does not promote “Regular” to verified just because it looks plausible.
+
+Optional agent explanation should reinforce that the value requires applicant confirmation.
+
+---
+
+## 1:42–2:15 — Preflight catches what completion hides
+
+**Prompt:**
 
 > Check everything before I submit.
 
-Expected preflight findings:
+**Visual:** deterministic preflight / final review gate.
 
-1. annual family income conflict — form says ₹350,000, certificate says ₹320,000;
-2. income certificate is older than the fictional 12-month requirement;
-3. any remaining confirmation item.
+Make sure these are visible:
 
-Show blockers/warnings in the application itself.
+- annual family income blocked
+- form: **₹3,50,000**
+- evidence: **₹3,20,000**
+- income certificate outside accepted 12-month validity window
+- remaining confirmations
+- declaration incomplete
+- **SUBMISSION BLOCKED**
 
-Narration:
+**Narration:**
 
-> The agent doesn't choose a convenient answer. It surfaces the conflict before the user makes a consequential submission.
+> Before submission, deterministic preflight catches the things a normal autofill system might hide: the form says three lakh fifty thousand, the certificate says three lakh twenty thousand, and that certificate is stale. webclerk surfaces the conflict instead of choosing a convenient answer.
 
-### 2:10–2:30 — Human authority
+---
 
-Show that the user can review/undo an agent-originated change and that final submission remains a human action.
+## 2:15–2:34 — Human authority
 
-Narration:
+**Prompt:**
 
-> The agent can inspect, explain, fill, and validate. It cannot silently submit the application for you.
+> Complete the declaration for me.
 
-### 2:30–2:45 — WebMCP proof
+**Visual:** declaration remains untouched / human-only boundary.
 
-Very briefly show the code or tool inspector with a few registered tools:
+**Narration:**
 
-```text
-get_application_state
-inspect_field
-list_evidence
-set_field_value
-run_preflight
-```
+> The agent can prepare the application. It cannot attest truthfulness for the applicant, and final submission is intentionally not exposed as a WebMCP tool.
 
-Narration:
+---
 
-> With WebMCP, the agent interacts with the form's meaning and state through structured tools instead of guessing how to operate the page.
+## 2:34–2:48 — Close
 
-### 2:45–2:55 — Close
+**Visual:** return to the summary / clean webclerk branding.
+
+**Narration:**
+
+> webclerk turns consequential forms into shared human-agent workspaces where every filled value has evidence, every uncertainty stays visible, and the human keeps the final authority.
 
 End card:
 
-**webclerk**
-
+**webclerk**  
 **Never guess on consequential forms.**
 
-## Demo requirements
+---
 
-- Seed state must reset deterministically.
-- No account/login should be necessary.
-- Do not depend on uploading private user documents during judging.
-- Avoid long model-generated paragraphs; the UI should communicate state visually.
-- Keep browser zoom and layout readable at video resolution.
-- All three aha moments should work even if the narrator says very little.
+## Recording rules
 
-## Failure fallback
-
-Prepare a `Reset demo` control.
-
-If live agent behavior becomes nondeterministic during recording/judging, domain operations must remain deterministic so the same tool sequence produces the expected state.
-
-Do not fake tool calls; instead make the underlying demo data and validations stable enough that the real tool calls are reliable.
-
-## Judge takeaway
-
-By the end of the video, a judge should be able to say:
-
-> webclerk isn't another form autofiller. It gives an agent structured access to the application's requirements and evidence while making uncertainty and human approval first-class parts of the experience.
+- Do not mention development failures or unsupported lightweight runtimes in the video.
+- Do not imply arbitrary PDFs are dynamically parsed; the MVP uses pre-extracted deterministic evidence.
+- Do not claim the agent can submit.
+- Keep the approval interaction in the video: it demonstrates the write boundary.
+- Do not fake tool calls or edit state manually during the recording.
+- If the run deviates from the verified baseline, stop and restart from a fresh chat/reset rather than repairing it mid-recording.
