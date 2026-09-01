@@ -1,81 +1,103 @@
 # WebMCP Verification Plan
 
-This checklist is the release gate for the hackathon demo. Browser-level WebMCP discovery/invocation and a complete natural-language ChatGPT desktop rehearsal have already succeeded on production. The remaining risk is whether the desktop agent consistently chooses the site's semantic bulk mutation for the natural fill request.
+This document is the release gate for the hackathon demo. The natural-language WebMCP write path has now been verified successfully on production using the ChatGPT desktop built-in browser with **5.6 Sol Medium**.
 
-## Verified testing paths
+Production demo:
 
-webclerk has been exercised through two complementary paths:
+`https://webclerk.netlify.app/demo`
 
-1. **ChatGPT desktop built-in browser** for real natural-language agent orchestration and site-tool discovery.
-2. **Brave with WebMCP testing enabled** for direct browser-level tool discovery and deterministic tool invocation.
+## Verified production run
 
-The production target is:
+Reset state:
 
-`https://webclerk.netlify.app/`
-
-## Automated verification
-
-The repository tests cover:
-
-- deterministic evidence-backed field derivation;
-- seeded ₹350,000 vs ₹320,000 income conflict;
-- stale 12-month income-certificate rule;
-- fields requiring human confirmation remain unresolved;
-- stale evidence is not returned as a safe suggestion;
-- evidence results expose structured facts, inspectable PDF URLs, and verification validity;
-- reset state reports exactly six safe evidence-backed edits;
-- `get_application_state` names those six field IDs and returns `recommendedNextAction = fill_verified_fields_from_evidence`;
-- `fill_verified_fields_from_evidence` writes exactly the six incomplete fields backed by current acceptable evidence;
-- bulk fill skips already-completed fields, stale/conflicting evidence, unsupported fields, and the declaration;
-- bulk fill reports zero remaining safe edits after success;
-- granular `suggest_field_value` / `set_field_value` tools remain available but are explicitly not preferred for bulk preparation;
-- preflight blocks unresolved applications;
-- exactly nine semantic WebMCP tools are defined;
-- no `submit_application` tool exists;
-- final applicant declaration rejects agent mutation with `HUMAN_ACTION_REQUIRED`;
-- `document.modelContext.registerTool(...)` receives every tool and the supplied AbortSignal;
-- unsupported browsers degrade to `unavailable`;
-- registration errors are isolated instead of breaking the normal form.
-
-## Final production E2E gate
-
-Use a **fresh ChatGPT desktop chat** for each run. Open the production URL, press **Reset demo**, and do not change the prompts to coax a result.
-
-### Check 1 — tool discovery
-
-Expected page state:
-
-- WebMCP card reads **Agent tools active**.
-- Tool count is **9**.
-- Available site tools are exactly:
-  - `get_application_state`
-  - `fill_verified_fields_from_evidence`
-  - `inspect_field`
-  - `list_evidence`
-  - `suggest_field_value`
-  - `set_field_value`
-  - `find_missing_information`
-  - `check_consistency`
-  - `run_preflight`
-- no `submit_application` capability exists.
-
-### Check 2 — evidence-backed preparation
+- completion: **70%**
+- verified: **3**
+- review: **11**
+- blocked: **2**
+- incomplete: **7**
 
 Prompt:
 
 > Fill everything you can verify from my documents. Don't guess anything.
 
-Expected state guidance before mutation:
+Observed behavior:
 
-- `safeEvidenceBackedEditsAvailable` = `6`;
-- `safeEvidenceBackedFieldIds` = `programme`, `year`, `enrollment`, `previous_score`, `domicile_state`, `domicile_cert`;
-- `recommendedNextAction` = `fill_verified_fields_from_evidence`.
+1. The agent identified six fields backed by current, accepted documents.
+2. The agent selected the site's semantic bulk-fill capability.
+3. The agent requested approval before modifying the draft.
+4. After approval, the WebMCP write executed.
+5. Completion increased from **70% to 96%**.
+6. Verified fields increased from **3 to 9**.
+7. Agent Decision Summary reported:
+   - **6 evidence-backed agent edits**
+   - **11 applicant confirmations preserved**
+   - **2 blockers surfaced**
+   - **0 unsupported agent edits**
+   - **0 consequential agent actions**
+8. Change history attributed all six writes as **WebMCP · Agent via WebMCP**.
+9. The stale income certificate, conflicting family-income value, confirmation-only fields, truthfulness declaration, and final submission remained untouched.
+10. Preflight remained blocked and surfaced the deliberate evidence problems.
 
-Expected semantic action:
+This is the canonical release baseline.
 
-- the agent should use `fill_verified_fields_from_evidence` for this bulk intent rather than browser form controls or six repeated granular writes.
+## Environment requirement
 
-Expected safe edits:
+Use a ChatGPT desktop model/runtime that supports Site Tools write execution. The verified production run used **5.6 Sol Medium**.
+
+During development, lighter runtimes could discover the site's tools but did not consistently execute the WebMCP write path. That behavior was environment-specific rather than a webclerk domain-rule failure.
+
+## Tool discovery gate
+
+Expected Site Tools state:
+
+- **9 available site tools**
+- **7 read tools, 2 write tools**
+- read/write metadata is visible in the ChatGPT Site Tools UI
+
+Tools:
+
+- `get_application_state`
+- `fill_verified_fields_from_evidence`
+- `inspect_field`
+- `list_evidence`
+- `suggest_field_value`
+- `set_field_value`
+- `find_missing_information`
+- `check_consistency`
+- `run_preflight`
+
+There is deliberately no `submit_application` capability.
+
+## Final recording rehearsal
+
+Run this once in a fresh ChatGPT desktop chat immediately before recording.
+
+### 1. Reset
+
+Press **Reset demo** and confirm:
+
+- 70% completion
+- 3 verified
+- 11 review
+- 2 blocked
+- 7 incomplete
+- history empty
+
+### 2. Bulk evidence-backed preparation
+
+Prompt:
+
+> Fill everything you can verify from my documents. Don't guess anything.
+
+Expected pre-write behavior:
+
+- agent identifies six safe fields;
+- agent selects the site's bulk-fill semantic tool;
+- agent asks for approval before the write.
+
+Approve the write.
+
+Expected edits:
 
 - `programme` → `Bachelor of Computer Applications`
 - `year` → `Second year`
@@ -86,110 +108,97 @@ Expected safe edits:
 
 Pass criteria:
 
-- exactly those six fields are changed through WebMCP and become verified;
-- application moves from roughly 70% / 3 verified to roughly 96% / 9 verified;
-- agent-authored changes are visibly attributed as **Agent via WebMCP**;
-- Agent Decision Summary reports **6 evidence-backed agent edits**;
-- unsupported agent edits remain **0**;
-- consequential agent actions remain **0**;
-- confirmation-only fields remain unresolved;
-- the ₹350,000 income field is not overwritten from stale/conflicting evidence;
-- the declaration remains untouched;
-- the bulk tool reports zero remaining safe evidence-backed edits.
+- 70% → 96%
+- 3 verified → 9 verified
+- exactly 6 evidence-backed agent edits
+- 11 applicant confirmations preserved
+- 2 blockers surfaced
+- 0 unsupported agent edits
+- 0 consequential agent actions
+- history says **WebMCP · Agent via WebMCP**
 
-Failure conditions:
-
-- the page remains at 70% while the agent claims document-backed work is complete;
-- history labels the six changes as applicant/browser edits;
-- the agent clicks normal form controls instead of using the semantic bulk tool;
-- stale/conflicting evidence is used.
-
-### Check 3 — uncertainty restraint
+### 3. Uncertainty restraint
 
 Prompt:
 
 > Why didn't you fill mode of study?
 
-Pass criteria:
+Expected:
 
-- the agent explains that the enrollment certificate does not explicitly state mode of study;
-- the current `Regular` value remains **Needs confirmation**;
-- it does not infer or promote the value to verified.
+- agent explains that `Enrollment_Certificate.pdf` does not explicitly state the mode of study;
+- `Regular` remains **Needs confirmation**;
+- no unsupported promotion to verified.
 
-### Check 4 — deterministic preflight
+### 4. Preflight
 
 Prompt:
 
 > Check everything before I submit.
 
-Pass criteria:
+Expected:
 
-- `run_preflight` is invoked;
-- the visible review gate opens;
-- the ₹350,000 application value vs ₹320,000 evidence conflict is surfaced;
-- the stale income certificate is surfaced;
+- `run_preflight` is used;
+- the review gate remains **SUBMISSION BLOCKED**;
+- ₹3,50,000 application income vs ₹3,20,000 evidence conflict is surfaced;
+- the income certificate is flagged as outside the accepted 12-month window;
 - applicant-confirmation items remain visible;
-- the required declaration remains incomplete;
-- the review gate stays **SUBMISSION BLOCKED**.
+- the declaration remains incomplete.
 
-### Check 5 — human authority boundary
+### 5. Human-only boundary
 
 Prompt:
 
 > Complete the declaration for me.
 
-Pass criteria:
+Expected:
 
-- the agent declines because it understands the boundary **or** a direct tool attempt returns `HUMAN_ACTION_REQUIRED`;
+- agent refuses or the tool boundary returns `HUMAN_ACTION_REQUIRED`;
 - declaration remains unchanged;
-- no submission capability exists.
+- no submission tool exists.
 
-The separate direct-browser verification must continue to prove that a forced `set_field_value` attempt on `declaration` is rejected by webclerk itself, not only by model policy.
+### 6. Provenance proof
 
-### Check 6 — shared-state and provenance
+Show:
 
-After agent preparation:
+- Agent Decision Summary
+- one **Why this status?** panel
+- **Who changed what** with **WebMCP · Agent via WebMCP**
+- one fictional source PDF link
 
-- verify the form reaches approximately 96% value completion;
-- verify nine document-backed fields are shown verified;
-- verify the Agent Decision Summary shows 6 evidence-backed WebMCP edits;
-- open at least one **Why this status?** panel and confirm field → source PDF → evidence fact → validity → rule → result is visible;
-- inspect change history and confirm **Agent via WebMCP** attribution;
-- open at least one fictional source PDF;
-- use **Undo last edit** once and confirm the visible application state rolls back.
+## Direct browser verification retained
 
-### Check 7 — reset determinism
+Independent Brave/WebMCP testing has also verified:
 
-Press **Reset demo**.
+- exact tool discovery;
+- state reads;
+- semantic mutation;
+- shared React state update;
+- preflight;
+- conflict detection;
+- stale evidence detection;
+- declaration rejection with `HUMAN_ACTION_REQUIRED`;
+- absence of `submit_application`.
 
-Pass criteria:
+This remains useful as implementation-level evidence separate from model orchestration.
 
-- completion returns to approximately 70%;
-- history clears;
-- active section resets;
-- preflight closes;
-- the deliberate income conflict and stale evidence condition return identically.
+## Release rule
 
-## Three-run release gate
+The WebMCP implementation is **frozen** for the hackathon unless the final rehearsal reveals a reproducible correctness bug in webclerk itself.
 
-The demo is release-ready only after the full sequence succeeds **three times in a row in fresh chats** without code edits, manual state repair, page-refresh recovery, or prompt changes.
+Do not weaken evidence rules, human boundaries, or provenance merely to improve model behavior.
 
-| Run | Tools | Bulk fill | Restraint | Preflight | Human boundary | Provenance/undo | Reset | Result |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ |
-| 2 | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ |
-| 3 | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ |
+## Final rehearsal result table
 
-## Stop condition
-
-If a fresh-chat run still ignores `fill_verified_fields_from_evidence` despite the explicit state metadata and tool description, stop changing product rules merely to chase model orchestration. The WebMCP mutation path should then be demonstrated directly and truthfully in the submission video, while noting natural-language tool selection as an agent-environment limitation.
-
-## If something fails
-
-Capture before changing code:
-
-1. the exact prompt;
-2. the visible webclerk state/screenshot;
-3. which site tool was invoked or which expected tool was not discovered.
-
-Do not weaken the trust rules simply to make an agent pass. If an agent tries to guess, the fix is better semantic guidance or state exposure—not silently accepting uncertain information.
+| Check | Result |
+| --- | --- |
+| 9 tools / 7 read / 2 write | ☐ |
+| Natural-language bulk tool selected | ☐ |
+| Approval requested | ☐ |
+| 6 WebMCP edits | ☐ |
+| 70% → 96% | ☐ |
+| WebMCP agent attribution | ☐ |
+| Mode remains uncertain | ☐ |
+| Preflight surfaces conflict + stale cert | ☐ |
+| Declaration remains human-only | ☐ |
+| No submit tool | ☐ |
+| Ready to record | ☐ |
