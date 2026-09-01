@@ -10,6 +10,23 @@ const tools = [
   ["run_preflight", "read"],
 ] as const;
 
+function DemoChevron() {
+  return (
+    <svg className="demo-picker-chevron" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+      <path d="M4 6.25 8 10l4-3.75" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function DemoMenu() {
+  return (
+    <div className="demo-picker-menu">
+      <a href="/demo"><strong>Scholarship application</strong><span>Primary WebMCP workflow · evidence-backed preparation</span></a>
+      <a href="/proof/insurance"><strong>Insurance claim</strong><span>Second workflow · same trust engine and tool layer</span></a>
+    </div>
+  );
+}
+
 function LandingPage() {
   const pointerFrame = useRef<number | null>(null);
 
@@ -48,7 +65,13 @@ function LandingPage() {
       <header className="landing-nav">
         <a className="landing-brand" href="#top" aria-label="webclerk home"><span className="brand-seal">✣</span><span>webclerk</span></a>
         <nav aria-label="Landing navigation"><a href="#why">Why</a><a href="#trust">Trust</a><a href="#workflow">How it works</a><a href="#tools">Tools</a></nav>
-        <div className="nav-actions"><a className="ghost-btn" href="https://github.com/ThunderKhan/webclerk" target="_blank" rel="noreferrer">GitHub</a><a className="primary-btn small" href="/demo">Open live demo</a></div>
+        <div className="nav-actions">
+          <a className="ghost-btn" href="https://github.com/ThunderKhan/webclerk" target="_blank" rel="noreferrer">GitHub</a>
+          <details className="demo-picker nav-demo-picker">
+            <summary className="primary-btn small"><span>Open live demo</span><DemoChevron /></summary>
+            <DemoMenu />
+          </details>
+        </div>
       </header>
 
       <main id="main-content">
@@ -59,16 +82,8 @@ function LandingPage() {
             <p>A WebMCP-powered trust layer that lets agents prepare applications from evidence, preserve uncertainty, surface conflicts, and leave consequential decisions to the human.</p>
             <div className="hero-actions">
               <details className="demo-picker">
-                <summary className="primary-btn">
-                  <span>Explore live demos</span>
-                  <svg className="demo-picker-chevron" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-                    <path d="M4 6.25 8 10l4-3.75" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </summary>
-                <div className="demo-picker-menu">
-                  <a href="/demo"><strong>Scholarship application</strong><span>Primary WebMCP workflow · evidence-backed preparation</span></a>
-                  <a href="/proof/insurance"><strong>Insurance claim</strong><span>Second workflow · same trust engine and tool layer</span></a>
-                </div>
+                <summary className="primary-btn"><span>Explore live demos</span><DemoChevron /></summary>
+                <DemoMenu />
               </details>
               <a className="ghost-btn" href="https://github.com/ThunderKhan/webclerk" target="_blank" rel="noreferrer">View on GitHub</a>
             </div>
