@@ -8,7 +8,7 @@
 ![WebMCP](https://img.shields.io/badge/WebMCP-semantic%20tools-d7b76a)
 ![Tools](https://img.shields.io/badge/tools-9-2f81f7)
 ![Read / Write](https://img.shields.io/badge/read%20%2F%20write-7%20%2F%202-8250df)
-![Tests](https://img.shields.io/badge/tests-25%20passing-2ea44f)
+![Tests](https://img.shields.io/badge/tests-30%20passing-2ea44f)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-2ea44f)
 
@@ -166,7 +166,15 @@ The Site Tools surface classifies them as **7 read tools and 2 write tools**. Th
 
 At reset, `get_application_state` reports six safe edits and recommends the bulk tool. The bulk tool applies only incomplete fields with current, acceptable mapped evidence and skips confirmation-only fields, stale evidence, unresolved conflicts, the declaration, and unsupported values.
 
-### Human authority boundary
+### Hard write boundary
+
+The granular `set_field_value` tool authorizes a proposed value **before** calling the application mutation bridge. Unsupported values, stale evidence, existing conflicts, confirmation-only fields, unknown fields, and the applicant declaration are rejected without changing application state.
+
+A direct unsupported write returns a structured error such as:
+
+```text
+UNSUPPORTED_VALUE
+```
 
 A direct agent attempt to complete the applicant declaration is rejected with:
 
@@ -222,7 +230,7 @@ The prototype has been exercised in:
 
 - **Brave with WebMCP enabled** for direct browser-level tool discovery and invocation;
 - **ChatGPT desktop built-in browser with 5.6 Sol Medium** for natural-language WebMCP orchestration and approved write execution;
-- the verified **Netlify production deployment**, with Vercel now hosting the current release.
+- the current **Vercel production deployment**.
 
 Verified behavior includes:
 
@@ -237,6 +245,7 @@ Verified behavior includes:
 - uncertainty preservation;
 - deterministic preflight;
 - declaration rejection with `HUMAN_ACTION_REQUIRED`;
+- rejection of unauthorized granular writes before mutation;
 - no autonomous submit capability.
 
 ## Run locally
@@ -279,6 +288,7 @@ Root scripts orchestrate the `apps/web` workspace, while the WebMCP implementati
 - [x] Agent-vs-applicant provenance
 - [x] Conflict/stale-evidence preflight
 - [x] Human-only declaration boundary
+- [x] Agent writes authorized before mutation
 - [x] WebMCP implementation frozen
 - [ ] Final clean release rehearsal
 - [ ] Record and publish final demo video
