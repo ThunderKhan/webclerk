@@ -2,14 +2,35 @@
 
 > **Never guess on consequential forms.**
 
-**Landing page:** https://webclerk.netlify.app/  
-**Live WebMCP demo:** https://webclerk.netlify.app/demo
+> ### Judges: start with the WebMCP implementation
+> **[`webmcp/index.ts`](webmcp/index.ts)** is the actual semantic tool surface registered with `document.modelContext`.  
+> **[`webmcp/domain.ts`](webmcp/domain.ts)** contains the deterministic evidence, validation, conflict, and human-authority rules.  
+> The React/Vite experience is intentionally secondary and lives under **[`apps/web/`](apps/web/)**.
+
+**Landing page:** https://webclerk.vercel.app/  
+**Live WebMCP demo:** https://webclerk.vercel.app/demo
 
 webclerk is a WebMCP-powered trust layer for consequential web forms. It lets an agent inspect the same application the human sees, read structured supporting evidence, fill only values that can be verified, preserve uncertainty, surface conflicts and stale evidence, and prepare the application without taking over truthfulness attestations or final submission.
 
 The current prototype uses a fictional Indian scholarship workflow to demonstrate the pattern end to end.
 
 > **Prototype notice:** the scholarship, department, application identifiers, PDFs, and government-style interface in this repository are fictional. webclerk is not affiliated with or endorsed by the Government of India or any public authority.
+
+## Repository layout
+
+```text
+webmcp/                 WebMCP tool surface + deterministic trust engine
+├── index.ts            9 semantic WebMCP tools and registration lifecycle
+├── domain.ts           evidence, validation, conflict and preflight rules
+├── data.ts             deterministic reference application/evidence model
+├── types.d.ts          browser WebMCP type declarations
+└── *.test.ts           domain + real registration contract tests
+
+apps/web/               Vite/React landing page and reference demo UI
+docs/                   product, architecture, verification and submission docs
+```
+
+The UI imports the top-level `webmcp/` modules; it does not contain a separate copy of the trust logic.
 
 ## Verified production flow
 
@@ -55,7 +76,7 @@ The agent deliberately leaves the stale/conflicting income evidence, confirmatio
 
 Open the live workspace at:
 
-https://webclerk.netlify.app/demo
+https://webclerk.vercel.app/demo
 
 Use this sequence:
 
@@ -97,6 +118,8 @@ This enables a collaboration model where:
 5. **Human commits** — declaration and final submission remain human actions.
 
 ## WebMCP tools
+
+The complete implementation is in [`webmcp/index.ts`](webmcp/index.ts).
 
 webclerk exposes exactly nine semantic tools:
 
@@ -188,7 +211,7 @@ The prototype has been exercised in:
 
 - **Brave with WebMCP enabled** for direct browser-level tool discovery and invocation;
 - **ChatGPT desktop built-in browser with 5.6 Sol Medium** for natural-language WebMCP orchestration and approved write execution;
-- **Netlify production deployment** at https://webclerk.netlify.app/demo.
+- **production deployment** on Vercel, with the original verified Netlify deployment retained as a backup.
 
 Verified behavior includes:
 
