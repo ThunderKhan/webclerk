@@ -8,6 +8,12 @@ export interface FieldFact {
   evidenceId: string;
 }
 
+export interface TrustRules {
+  evidenceFacts: FieldFact[];
+  confirmationOnlyFields: ReadonlySet<string>;
+  confirmationReasons: Readonly<Record<string, string>>;
+}
+
 export interface FieldInspection {
   field: ApplicationField;
   evidence?: EvidenceDocument;
@@ -72,12 +78,33 @@ const confirmationOnlyFields = new Set([
   "declaration",
 ]);
 
+const confirmationReasons: Record<string, string> = {
+  gender: "No supporting document is designated as authoritative for this field.",
+  mobile: "User-entered contact detail; applicant confirmation is required.",
+  email: "User-entered contact detail; applicant confirmation is required.",
+  address: "Current correspondence address is not directly attested by the seeded evidence set.",
+  mode: "The enrollment certificate does not explicitly state the mode of study.",
+  dependents: "No uploaded evidence directly verifies the number of dependent family members.",
+  earning_member: "Applicant confirmation is required for this household detail.",
+  bank_account: "No bank evidence is included in the MVP evidence set.",
+  category: "No category certificate is present; applicant confirmation is required.",
+  existing_scholarship: "Self-declaration; this cannot be inferred from uploaded documents.",
+  disability: "Self-declaration; the agent must not infer disability status from unrelated evidence.",
+  declaration: "The declaration is a consequential attestation and must be completed by the applicant.",
+};
+
+export const DEFAULT_TRUST_RULES: TrustRules = {
+  evidenceFacts,
+  confirmationOnlyFields,
+  confirmationReasons,
+};
+
 function normalize(value: string) {
   return value.trim().replace(/\s+/g, " ").toLocaleLowerCase("en-IN");
 }
 
-function evidenceForField(fieldId: string, evidence: EvidenceDocument[]) {
-  const fact = evidenceFacts.find((item) => item.fieldId === fieldId);
+function evidenceForField(fieldId: string, evidence: EvidenceDocument[], rules: TrustRules) {
+  const fact = rules.evidenceFacts.find((item) => item.fieldId === fieldId);
   if (!fact) return undefined;
   const document = evidence.find((item) => item.id === fact.evidenceId);
   if (!document) return undefined;
@@ -98,7 +125,12 @@ export function isEvidenceStale(document: EvidenceDocument, now = new Date()) {
   return now.valueOf() - issued.valueOf() > maxAge;
 }
 
-export function deriveField(field: ApplicationField, evidence: EvidenceDocument[], now = new Date()): ApplicationField {
+export function deriveField(
+  field: ApplicationField,
+  evidence: EvidenceDocument[],
+  now = new Date(),
+  rules: TrustRules = DEFAULT_TRUST_RULES,
+): ApplicationField {
   const value = field.value.trim();
   if (!value) {
     return {
@@ -109,11 +141,8 @@ export function deriveField(field: ApplicationField, evidence: EvidenceDocument[
     };
   }
 
-  const match = evidenceForField(field.id, evidence);
+  const match = evidenceForField(field.id, evidence, rules);
   if (match) {
-    // A contradictory value is the most actionable field-level problem, so
-    // surface it before document-age validation. Other fields backed by the
-    // same stale document can still expose the staleness independently.
     if (normalize(value) !== normalize(match.fact.value)) {
       return {
         ...field,
@@ -141,12 +170,12 @@ export function deriveField(field: ApplicationField, evidence: EvidenceDocument[
     };
   }
 
-  if (confirmationOnlyFields.has(field.id)) {
+  if (rules.confirmationOnlyFields.has(field.id)) {
     return {
       ...field,
       status: "needs_confirmation",
       source: undefined,
-      issue: confirmationReason(field.id),
+      issue: confirmationReason(field.id, rules),
     };
   }
 
@@ -158,15 +187,26 @@ export function deriveField(field: ApplicationField, evidence: EvidenceDocument[
   };
 }
 
-export function deriveFields(fields: ApplicationField[], evidence: EvidenceDocument[], now = new Date()) {
-  return fields.map((field) => deriveField(field, evidence, now));
+export function deriveFields(
+  fields: ApplicationField[],
+  evidence: EvidenceDocument[],
+  now = new Date(),
+  rules: TrustRules = DEFAULT_TRUST_RULES,
+) {
+  return fields.map((field) => deriveField(field, evidence, now, rules));
 }
 
-export function inspectField(fieldId: string, fields: ApplicationField[], evidence: EvidenceDocument[], now = new Date()): FieldInspection | undefined {
+export function inspectField(
+  fieldId: string,
+  fields: ApplicationField[],
+  evidence: EvidenceDocument[],
+  now = new Date(),
+  rules: TrustRules = DEFAULT_TRUST_RULES,
+): FieldInspection | undefined {
   const field = fields.find((item) => item.id === fieldId);
   if (!field) return undefined;
-  const derived = deriveField(field, evidence, now);
-  const match = evidenceForField(field.id, evidence);
+  const derived = deriveField(field, evidence, now, rules);
+  const match = evidenceForField(field.id, evidence, rules);
   return {
     field: derived,
     evidence: match?.document,
@@ -176,8 +216,13 @@ export function inspectField(fieldId: string, fields: ApplicationField[], eviden
   };
 }
 
-export function suggestFieldValue(fieldId: string, evidence: EvidenceDocument[], now = new Date()) {
-  const match = evidenceForField(fieldId, evidence);
+export function suggestFieldValue(
+  fieldId: string,
+  evidence: EvidenceDocument[],
+  now = new Date(),
+  rules: TrustRules = DEFAULT_TRUST_RULES,
+) {
+  const match = evidenceForField(fieldId, evidence, rules);
   if (!match || isEvidenceStale(match.document, now)) return undefined;
   return {
     value: match.fact.value,
@@ -186,20 +231,35 @@ export function suggestFieldValue(fieldId: string, evidence: EvidenceDocument[],
   };
 }
 
-export function findMissingInformation(fields: ApplicationField[], evidence: EvidenceDocument[], now = new Date()) {
-  return deriveFields(fields, evidence, now).filter(
+export function findMissingInformation(
+  fields: ApplicationField[],
+  evidence: EvidenceDocument[],
+  now = new Date(),
+  rules: TrustRules = DEFAULT_TRUST_RULES,
+) {
+  return deriveFields(fields, evidence, now, rules).filter(
     (field) => field.required && (field.status === "empty" || field.status === "needs_confirmation" || field.status === "blocked"),
   );
 }
 
-export function checkConsistency(fields: ApplicationField[], evidence: EvidenceDocument[], now = new Date()) {
-  return deriveFields(fields, evidence, now)
+export function checkConsistency(
+  fields: ApplicationField[],
+  evidence: EvidenceDocument[],
+  now = new Date(),
+  rules: TrustRules = DEFAULT_TRUST_RULES,
+) {
+  return deriveFields(fields, evidence, now, rules)
     .filter((field) => field.status === "blocked")
     .map((field) => ({ fieldId: field.id, label: field.label, issue: field.issue ?? "Blocked" }));
 }
 
-export function runPreflight(fields: ApplicationField[], evidence: EvidenceDocument[], now = new Date()): PreflightResult {
-  const derived = deriveFields(fields, evidence, now);
+export function runPreflight(
+  fields: ApplicationField[],
+  evidence: EvidenceDocument[],
+  now = new Date(),
+  rules: TrustRules = DEFAULT_TRUST_RULES,
+): PreflightResult {
+  const derived = deriveFields(fields, evidence, now, rules);
   const critical: PreflightIssue[] = [];
   const warnings: PreflightIssue[] = [];
   const missingRequired: string[] = [];
@@ -254,22 +314,8 @@ export function formatValue(field: ApplicationField, value: string) {
   return value;
 }
 
-export function confirmationReason(fieldId: string) {
-  const reasons: Record<string, string> = {
-    gender: "No supporting document is designated as authoritative for this field.",
-    mobile: "User-entered contact detail; applicant confirmation is required.",
-    email: "User-entered contact detail; applicant confirmation is required.",
-    address: "Current correspondence address is not directly attested by the seeded evidence set.",
-    mode: "The enrollment certificate does not explicitly state the mode of study.",
-    dependents: "No uploaded evidence directly verifies the number of dependent family members.",
-    earning_member: "Applicant confirmation is required for this household detail.",
-    bank_account: "No bank evidence is included in the MVP evidence set.",
-    category: "No category certificate is present; applicant confirmation is required.",
-    existing_scholarship: "Self-declaration; this cannot be inferred from uploaded documents.",
-    disability: "Self-declaration; the agent must not infer disability status from unrelated evidence.",
-    declaration: "The declaration is a consequential attestation and must be completed by the applicant.",
-  };
-  return reasons[fieldId] ?? "Applicant confirmation is required.";
+export function confirmationReason(fieldId: string, rules: TrustRules = DEFAULT_TRUST_RULES) {
+  return rules.confirmationReasons[fieldId] ?? "Applicant confirmation is required.";
 }
 
 export function makeChangeRecord(
