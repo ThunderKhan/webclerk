@@ -46,7 +46,7 @@ The scholarship is only the reference workflow. The same trust model can apply t
 
 ### Evidence, not confidence
 
-Model confidence alone can never make a value verified. A field is verified only when acceptable mapped evidence supports it.
+Model confidence alone can never make a value verified. A field is verified only when acceptable mapped evidence supports it. Granular agent writes are authorized before mutation, so unsupported, stale, conflicting, confirmation-only, or human-only values are rejected without changing application state.
 
 ### Uncertainty stays visible
 
@@ -92,7 +92,7 @@ There is deliberately no `submit_application` tool.
 - shared React application state for human and agent edits
 - explicit provenance and edit attribution
 - fictional source PDFs with fixed pre-extracted structured evidence
-- Netlify deployment
+- Vercel deployment
 
 The MVP intentionally does not include arbitrary PDF OCR or document extraction. That layer could precede webclerk's normalized evidence engine in a production system.
 
@@ -132,8 +132,8 @@ Any form-oriented service could expose its own semantic requirements, evidence m
 
 ## Links
 
-**Live demo:** https://webclerk.netlify.app/demo  
-**Landing page:** https://webclerk.netlify.app/  
+**Live demo:** https://webclerk.vercel.app/demo  
+**Landing page:** https://webclerk.vercel.app/  
 **GitHub:** https://github.com/ThunderKhan/webclerk
 
 ## Suggested technologies / tags
@@ -152,5 +152,5 @@ WebMCP, React, TypeScript, Vite, Human-in-the-loop AI, AI Agents, Developer Tool
 
 webclerk is a WebMCP-powered trust layer for consequential web forms. In this demo, ChatGPT uses semantic site tools to fill only document-verified scholarship fields, preserve uncertainty, surface stale/conflicting evidence, and leave truthfulness declarations and final submission to the human.
 
-Live demo: https://webclerk.netlify.app/demo  
+Live demo: https://webclerk.vercel.app/demo  
 Source: https://github.com/ThunderKhan/webclerk
