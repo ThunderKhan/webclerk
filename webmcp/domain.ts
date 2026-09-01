@@ -162,6 +162,15 @@ export function deriveField(
       };
     }
 
+    if (match.document.status !== "accepted") {
+      return {
+        ...field,
+        status: "blocked",
+        source: match.document.name,
+        issue: `${match.document.name} requires human attention and is not accepted evidence for verification.`,
+      };
+    }
+
     return {
       ...field,
       status: "verified",
@@ -223,7 +232,7 @@ export function suggestFieldValue(
   rules: TrustRules = DEFAULT_TRUST_RULES,
 ) {
   const match = evidenceForField(fieldId, evidence, rules);
-  if (!match || isEvidenceStale(match.document, now)) return undefined;
+  if (!match || match.document.status !== "accepted" || isEvidenceStale(match.document, now)) return undefined;
   return {
     value: match.fact.value,
     evidenceId: match.document.id,
