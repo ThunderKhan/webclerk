@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "test": "vitest run ../../webmcp",
+    "test": "cd ../.. && vitest run webmcp",
     "preview": "vite preview"
   },
   "dependencies": {
