@@ -40,14 +40,14 @@ function ClerkSpider() {
 
 function LandingPage() {
   return (
-    <div className="landing-shell">
+    <div id="top" className="landing-shell">
       <header className="landing-nav">
         <a className="landing-brand" href="#top" aria-label="webclerk home"><span className="brand-seal">✣</span><span>webclerk</span></a>
         <nav aria-label="Landing navigation"><a href="#why">Why</a><a href="#workflow">How it works</a><a href="#tools">Tools</a><a href="#trust">Trust</a></nav>
         <div className="nav-actions"><a className="ghost-btn" href="https://github.com/ThunderKhan/webclerk" target="_blank" rel="noreferrer">GitHub ↗</a><a className="primary-btn small" href="/demo">Open live demo ↗</a></div>
       </header>
 
-      <main id="top">
+      <main id="main-content">
         <section className="landing-hero">
           <div className="hero-copy">
             <span className="section-kicker">EVIDENCE &gt; CONFIDENCE</span>
