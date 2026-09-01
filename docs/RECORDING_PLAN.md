@@ -1,146 +1,161 @@
 # Recording Plan
 
-This is the shot-by-shot plan for the final hackathon video.
+Shot-by-shot plan for the final WebMCP Challenge video.
 
-Target duration: **2:35–2:50**. Record at 1080p if possible.
+Target duration: **2:40–2:55**. Record at 1080p or better if possible.
 
 ## Pre-record setup
 
-- Use ChatGPT desktop.
-- Select **5.6 Sol Medium**.
-- Open `https://webclerk.netlify.app/demo`.
+- Use a ChatGPT browser/runtime that supports Site Tools write execution.
+- Open `https://webclerk.vercel.app/demo`.
 - Start a fresh chat.
 - Press **Reset demo**.
 - Confirm 70% completion / 3 verified / 11 review / 2 blocked / 7 incomplete.
 - Open Site Tools once and confirm 9 tools / 7 read / 2 write.
+- In another tab, preload `https://webclerk.vercel.app/proof/insurance`.
 - Close unrelated tabs and notifications.
-- Set browser zoom so the application summary and right-side trust panel are readable.
-- Keep mouse movement deliberate and slow.
+- Set browser zoom so status, provenance and blockers remain readable.
+- Keep mouse movement deliberate.
 
 ## Shot list
 
-### Shot 1 — Reset state / problem (0:00–0:12)
+### Shot 1 — Problem (0:00–0:12)
 
 Frame:
-- application heading
-- 70% completion
-- evidence/trust panel
+- scholarship heading
+- incomplete/conflicting application state
+- trust/evidence context
 
 Narration focus:
-- consequential forms need justified completion, not maximum completion.
+- consequential workflows need justified completion, not maximum completion.
 
 ### Shot 2 — WebMCP proof (0:12–0:27)
 
-Open Site Tools.
+Open Site Tools briefly.
 
 Capture:
-- 9 available tools
+- 9 semantic tools
 - 7 read / 2 write
-- “Fill all fields verified by documents”
-- “Run application preflight”
+- bulk evidence-backed preparation
+- preflight
 
-Do not linger on every tool.
+If the runtime exposes annotations, briefly show that evidence-derived tools are read-only/untrusted-content aware. Do not narrate every tool.
 
-### Shot 3 — Natural-language intent (0:27–0:42)
+### Shot 3 — Natural-language intent (0:27–0:40)
 
-Close Site Tools and type:
+Prompt:
 
 > Fill everything you can verify from my documents. Don't guess anything.
 
-Keep the prompt visible as the agent identifies the six safe edits.
+Keep the prompt visible while the agent identifies the safe action.
 
-### Shot 4 — Approval boundary (0:42–0:53)
+### Shot 4 — Approval boundary (0:40–0:50)
 
-Capture the agent asking permission before using the bulk site write.
+Capture the approval request before the bulk site write.
 
 Approve it.
 
-This is an important trust moment, not dead time.
+This is an intentional trust moment.
 
-### Shot 5 — WebMCP mutation result (0:53–1:05)
+### Shot 5 — Shared-state result (0:50–1:02)
 
 Capture:
 - 96% completion
 - 9 verified
-- Agent Decision Summary: 6 / 11 / 2 / 0 / 0
+- 6 evidence-backed agent edits
+- 0 unsupported edits
+- 0 consequential agent actions
 
-Pause for about two seconds so judges can read the numbers.
+Pause briefly so the result is legible.
 
-### Shot 6 — Provenance / audit trail (1:05–1:23)
+### Shot 6 — Provenance (1:02–1:18)
 
-Scroll to **Who changed what**.
+Show:
+- at least one `WebMCP · Agent via WebMCP` entry;
+- one field explanation with supporting evidence and decision state.
 
-Show at least two entries clearly marked:
+Narration focus:
+- the agent write is auditable and evidence-grounded.
 
-> WEBMCP · AGENT VIA WEBMCP
-
-Then open one **Why this status?** panel showing:
-- source PDF
-- evidence fact
-- validity
-- rule
-- result
-
-### Shot 7 — Uncertainty (1:23–1:42)
+### Shot 7 — Uncertainty (1:18–1:36)
 
 Prompt:
 
 > Why didn't you fill mode of study?
 
-Show the mode field still marked **Needs confirmation**.
+Show the field still marked **Needs confirmation**.
 
-Avoid unnecessary scrolling while the explanation appears.
-
-### Shot 8 — Preflight (1:42–2:15)
+### Shot 8 — Preflight (1:36–2:05)
 
 Prompt:
 
 > Check everything before I submit.
 
-Frame the final review/preflight region so these are visible:
-- SUBMISSION BLOCKED
-- ₹3,50,000 vs ₹3,20,000 conflict
-- stale income certificate
-- declaration required
+Capture:
+- readiness blocked;
+- ₹3,50,000 vs ₹3,20,000 conflict;
+- stale income certificate;
+- remaining confirmations;
+- declaration incomplete.
 
-If possible, keep the agent's short summary visible at the same time.
-
-### Shot 9 — Human boundary (2:15–2:34)
+### Shot 9 — Human boundary (2:05–2:23)
 
 Prompt:
 
 > Complete the declaration for me.
 
-Show that the declaration remains a human action.
+Capture the refusal / unchanged declaration.
 
 Do not manually complete it.
 
-### Shot 10 — End card (2:34–2:48)
+### Shot 10 — Generalization proof (2:23–2:42)
 
-Return to a clean webclerk view or landing-page title area.
+Switch to the preloaded insurance tab:
+
+`https://webclerk.vercel.app/proof/insurance`
+
+Capture:
+- **Motor Insurance Claim** title;
+- same WebMCP-active status;
+- repair estimate blocked at ₹85,000 vs evidence ₹78,500;
+- claimant-only fault admission or fraud declaration.
+
+If a clean insurance WebMCP run has already been captured, show the four safe evidence-backed fields populated. Otherwise, do not burn recording time waiting for another agent response — the live workspace + tests prove the architecture.
+
+Narration focus:
+
+> Same trust engine. Same nine-tool factory. Different consequential workflow.
+
+### Shot 11 — End (2:42–2:55)
+
+Return to clean webclerk branding or architecture.
 
 End on:
 
 **webclerk**  
 **Never guess on consequential forms.**
 
-## Editing notes
+## Editing rules
 
-- Cut waiting time, but do not cut away the approval decision itself.
-- Use simple hard cuts; no flashy transitions are necessary.
-- Avoid background music unless it is extremely subtle.
-- Keep captions for the four prompts if narration is fast.
-- Never speed up UI interactions so much that provenance or blockers become unreadable.
-- The core proof is visual state change, not narration.
+- Hard cap: **under 3:00**.
+- Cut model waiting time, but keep the approval interaction visible.
+- Prefer simple hard cuts.
+- Keep text readable; do not excessively speed UI footage.
+- Captions are useful for the four primary prompts.
+- Do not imply arbitrary PDF OCR exists.
+- Do not imply the agent can attest or submit.
+- Do not fake tool calls or manually manufacture agent results.
+- The strongest proof is state transition + restraint + refusal + second workflow.
 
-## Backup capture
+## Backup clips
 
-Before the final recording session ends, separately capture 5–10 second clips of:
+Capture separate short clips of:
 
-1. Site Tools showing 9 / 7 read / 2 write.
-2. Agent Decision Summary showing 6 / 11 / 2 / 0 / 0.
-3. `WebMCP · Agent via WebMCP` history.
-4. The income conflict + stale certificate preflight.
-5. Human-only boundary / no submit capability.
+1. Site Tools showing 9 tools / 7 read / 2 write.
+2. Scholarship result showing six safe WebMCP edits.
+3. `WebMCP · Agent via WebMCP` provenance.
+4. Income conflict + stale certificate.
+5. Human-only declaration refusal.
+6. Insurance route showing the second workflow and repair conflict.
 
-These clips can replace a bad segment without rerunning the entire demo.
+These can replace a bad segment without rerunning the entire presentation.
