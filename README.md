@@ -2,7 +2,8 @@
 
 > **Never guess on consequential forms.**
 
-**Live demo:** https://webclerk.netlify.app/
+**Landing page:** https://webclerk.netlify.app/  
+**Live WebMCP demo:** https://webclerk.netlify.app/demo
 
 webclerk is a WebMCP-powered trust layer for consequential web forms. It lets an agent inspect the same application the human sees, read structured supporting evidence, fill only values that can be verified, preserve uncertainty, surface conflicts and stale evidence, and prepare the application without taking over truthfulness attestations or final submission.
 
@@ -12,7 +13,11 @@ The current prototype uses a fictional Indian scholarship workflow to demonstrat
 
 ## For judges
 
-Open the live app in a WebMCP-capable environment and use these prompts in order:
+Start at the landing page for the product story, then open the live WebMCP workspace at:
+
+https://webclerk.netlify.app/demo
+
+Use these prompts in order:
 
 1. **"Fill everything you can verify from my documents. Don't guess anything."**
 2. **"Why didn't you fill mode of study?"**
@@ -229,7 +234,7 @@ The prototype has been exercised in:
 
 - **Brave with WebMCP enabled** for direct browser-level tool discovery and invocation;
 - **ChatGPT desktop built-in browser** for natural-language agent orchestration;
-- **Netlify production deployment** at https://webclerk.netlify.app/.
+- **Netlify production deployment** at https://webclerk.netlify.app/demo.
 
 Validated behavior includes:
 
@@ -277,6 +282,7 @@ WebMCP itself requires a supported browser/agent environment. In an ordinary bro
 ## Status
 
 - [x] Product foundation
+- [x] Judge-facing landing page
 - [x] Static government-style application workspace
 - [x] Deterministic evidence and validation logic
 - [x] WebMCP tool layer
