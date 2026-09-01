@@ -78,6 +78,14 @@ function normalizeValue(value: string) {
   return value.trim().replace(/\s+/g, " ").toLocaleLowerCase("en-IN");
 }
 
+function humanAuthorityPayload(context: WebMcpWorkflowContext) {
+  return {
+    fieldIds: context.humanOnlyFieldIds,
+    declaration: context.humanOnlyFieldIds.includes("declaration") ? "human_only" : undefined,
+    submission: "not_exposed_as_a_webmcp_tool",
+  };
+}
+
 function authorizeAgentMutation(
   fields: ApplicationField[],
   fieldId: string,
@@ -97,7 +105,9 @@ function authorizeAgentMutation(
     return {
       ok: false as const,
       code: "HUMAN_ACTION_REQUIRED",
-      message: `${field.label} is a consequential human-only action. It is intentionally not agent-authorizable and must be completed directly by the applicant or claimant.`,
+      message: fieldId === "declaration"
+        ? "The declaration is a consequential truthfulness attestation. It is intentionally not agent-authorizable. The applicant must review the form and perform this action directly."
+        : `${field.label} is a consequential human-only action. It is intentionally not agent-authorizable and must be completed directly by the applicant or claimant.`,
     };
   }
 
@@ -262,8 +272,7 @@ export function createWebMcpTools(
           },
           agentAuthority: AGENT_AUTHORITY,
           humanAuthority: {
-            fieldIds: context.humanOnlyFieldIds,
-            submission: "not_exposed_as_a_webmcp_tool",
+            ...humanAuthorityPayload(context),
             safeEvidenceBackedEdits: "agent_allowed_and_reversible_after_user_request",
           },
           preflight: {
@@ -311,6 +320,7 @@ export function createWebMcpTools(
             confirmationOnlyFieldsChanged: 0,
             staleEvidenceUsed: false,
             humanOnlyFieldIds: context.humanOnlyFieldIds,
+            declaration: context.humanOnlyFieldIds.includes("declaration") ? "human_only" : undefined,
             submission: "not_exposed_as_a_webmcp_tool",
           },
           message: applied.length > 0
@@ -534,10 +544,7 @@ export function createWebMcpTools(
           ok: true,
           ...preflight,
           agentAuthority: AGENT_AUTHORITY,
-          humanAuthority: {
-            fieldIds: context.humanOnlyFieldIds,
-            submission: "not_exposed_as_a_webmcp_tool",
-          },
+          humanAuthority: humanAuthorityPayload(context),
         });
       },
     },
