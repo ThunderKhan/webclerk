@@ -6,9 +6,9 @@ This file is a fast path for evaluating webclerk against the OpenAI WebMCP Chall
 
 Start with:
 
-- `webmcp/index.ts` — the nine semantic WebMCP tools and registration lifecycle
+- `webmcp/index.ts` — the workflow-configurable nine-tool WebMCP surface and registration lifecycle
 - `webmcp/authority.ts` — explicit machine-readable agent authority
-- `webmcp/webmcp.metadata.test.ts` — read/write and untrusted-content annotations
+- `webmcp/webmcp.metadata.test.ts` — read/write, untrusted-content, and metadata-budget checks
 - `webmcp/authority.webmcp.test.ts` — authority contract surfaced to the agent
 
 Key properties:
@@ -22,7 +22,7 @@ Key properties:
 
 ## 2. Execution
 
-Primary live demo:
+### Primary scholarship demo
 
 `https://webclerk.vercel.app/demo`
 
@@ -43,6 +43,22 @@ Expected behavior:
 - preflight blocks readiness;
 - the declaration is rejected as a human-only action;
 - there is no WebMCP submission tool.
+
+### Live insurance generalization proof
+
+`https://webclerk.vercel.app/proof/insurance`
+
+Suggested prompt:
+
+`Fill everything you can verify from the claim evidence. Don't guess anything.`
+
+Expected behavior:
+
+- claimant name, policy number, vehicle registration and incident date are safe evidence-backed writes;
+- the seeded ₹85,000 vs ₹78,500 repair-estimate conflict remains visible;
+- fault admission and first-person incident narrative remain claimant-confirmation fields;
+- the fraud declaration is a human-only consequential action;
+- the same nine semantic WebMCP tools are registered against the insurance workflow context.
 
 ## 3. Potential impact
 
@@ -67,8 +83,9 @@ To prove that this is not hard-coded to scholarship logic, inspect:
 - `webmcp/workflows/insurance.ts`
 - `webmcp/workflows/insurance.test.ts`
 - `webmcp/workflows/insurance.webmcp.test.ts`
+- `apps/web/src/InsuranceProof.tsx`
 
-The motor-insurance fixture uses the same deterministic trust engine and the same WebMCP semantic tool factory with a different field set, evidence set, conflicts, and human-only legal decisions.
+The motor-insurance workflow uses the same deterministic trust engine, the same WebMCP semantic tool factory, and the same shared-state browser model with a different field set, evidence set, conflicts, and human-only legal decisions.
 
 ## 5. Adversarial verification
 
