@@ -8,291 +8,314 @@
 ![WebMCP](https://img.shields.io/badge/WebMCP-semantic%20tools-d7b76a)
 ![Tools](https://img.shields.io/badge/tools-9-2f81f7)
 ![Read / Write](https://img.shields.io/badge/read%20%2F%20write-7%20%2F%202-8250df)
-![Tests](https://img.shields.io/badge/tests-30%20passing-2ea44f)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-2ea44f)
 
-Evidence-backed WebMCP automation that preserves uncertainty and keeps consequential decisions human-controlled.
+**Evidence-backed WebMCP automation that preserves uncertainty and keeps consequential decisions human-controlled.**
 
-**OpenAI WebMCP Challenge · Trust-first browser automation · Human-in-the-loop**
-
-[Live site](https://webclerk.vercel.app/) · [WebMCP demo](https://webclerk.vercel.app/demo) · [WebMCP implementation](webmcp/index.ts) · [Architecture](#architecture) · [Verification](docs/VERIFICATION.md) · [Docs](docs/WEBMCP.md)
+[Live site](https://webclerk.vercel.app/) · [Scholarship demo](https://webclerk.vercel.app/demo) · [Insurance proof](https://webclerk.vercel.app/proof/insurance) · [Judge guide](docs/JUDGE_GUIDE.md) · [WebMCP core](webmcp/index.ts)
 
 </div>
 
 ---
 
-> ### Judges: start with the WebMCP implementation
-> **[`webmcp/index.ts`](webmcp/index.ts)** is the actual semantic tool surface registered with `document.modelContext`.  
-> **[`webmcp/domain.ts`](webmcp/domain.ts)** contains the deterministic evidence, validation, conflict, and human-authority rules.  
-> The React/Vite experience is intentionally secondary and lives under **[`apps/web/`](apps/web/)**.
+## What is webclerk?
 
-webclerk is a WebMCP-powered trust layer for consequential web forms. It lets an agent inspect the same application the human sees, read structured supporting evidence, fill only values that can be verified, preserve uncertainty, surface conflicts and stale evidence, and prepare the application without taking over truthfulness attestations or final submission.
+Most autofill systems optimize for **completion**. webclerk optimizes for **justified completion**.
 
-The current prototype uses a fictional Indian scholarship workflow to demonstrate the pattern end to end.
+webclerk is a WebMCP-powered trust layer for consequential web forms. A browser agent can inspect application state, read supporting evidence, fill values that the site can actually verify, surface conflicts and stale evidence, and run deterministic preflight checks — while unsupported facts, truthfulness attestations, and final submission remain under human authority.
 
-> **Prototype notice:** the scholarship, department, application identifiers, PDFs, and government-style interface in this repository are fictional. webclerk is not affiliated with or endorsed by the Government of India or any public authority.
+The core idea is simple:
 
-## Repository layout
+> **The agent can prepare. The human commits.**
+
+## Why WebMCP?
+
+webclerk does not expose DOM clicks or a chatbot wrapper. The page publishes semantic capabilities through `document.modelContext.registerTool(...)`, so an agent works with concepts such as evidence, fields, conflicts, preflight, and delegated authority directly.
+
+Human and agent operate on the **same browser-visible state**.
 
 ```text
-webmcp/                 WebMCP tool surface + deterministic trust engine
-├── index.ts            9 semantic WebMCP tools and registration lifecycle
-├── domain.ts           evidence, validation, conflict and preflight rules
-├── data.ts             deterministic reference application/evidence model
-├── types.d.ts          browser WebMCP type declarations
-└── *.test.ts           domain + registration contract tests
-
-apps/web/               Vite/React landing page and reference demo UI
-docs/                   product, architecture, verification and submission docs
+human intent
+    ↓
+agent selects semantic WebMCP capability
+    ↓
+site-owned deterministic trust policy
+    ├─ authorized → reversible mutation in shared UI state
+    └─ unsupported / stale / conflicting / human-only → structured refusal
 ```
 
-The UI imports the top-level `webmcp/` modules; it does not contain a separate copy of the trust logic.
+The website — not model confidence — defines what counts as acceptable evidence and what authority is delegated.
 
-## Verified production flow
+## Live workflows
 
-The natural-language WebMCP path has been verified end to end in the ChatGPT desktop built-in browser using **5.6 Sol Medium**.
-
-<p align="center">
-  <img src="docs/assets/readme/webclerk-seal-wordmark.png" alt="webclerk verified agent flow from user intent through WebMCP to human-only declaration" width="100%" />
-</p>
-
-Starting from the deterministic reset state:
-
-- completion: **70%**
-- verified: **3**
-- review: **11**
-- blocked: **2**
-- incomplete: **7**
-
-Prompt:
-
-> Fill everything you can verify from my documents. Don't guess anything.
-
-The agent identifies six safe evidence-backed edits, asks for approval before the write, then invokes the site's bulk semantic write capability. After approval:
-
-- completion becomes **96%**;
-- verified becomes **9**;
-- **6 evidence-backed agent edits** are recorded;
-- **11 applicant confirmations** remain preserved;
-- **2 blockers** remain surfaced;
-- unsupported agent edits remain **0**;
-- consequential agent actions remain **0**;
-- history attributes the six changes as **WebMCP · Agent via WebMCP**.
-
-The six WebMCP edits are:
-
-- programme of study;
-- current year of study;
-- enrollment number;
-- previous academic-year percentage;
-- state of domicile;
-- domicile certificate number.
-
-The agent deliberately leaves stale/conflicting income evidence, confirmation-only fields, the truthfulness declaration, and final submission untouched.
-
-> **Demo environment note:** use a model/runtime that supports ChatGPT Site Tools write execution. The verified production run used **5.6 Sol Medium**. Lighter runtimes tested during development could discover tools but did not consistently execute the WebMCP write path.
-
-## For judges
-
-Open the live workspace at:
+### 1. Scholarship application — primary demo
 
 **https://webclerk.vercel.app/demo**
 
-Use this sequence:
+Try:
 
-1. **"Fill everything you can verify from my documents. Don't guess anything."**
-2. Approve the requested site write.
-3. **"Why didn't you fill mode of study?"**
-4. **"Check everything before I submit."**
-5. **"Complete the declaration for me."**
+> Fill everything you can verify from my documents. Don't guess anything.
 
-Expected behavior:
+Expected result:
 
-- the bulk preparation request routes to `fill_verified_fields_from_evidence`;
-- six safe fields are written through WebMCP and visibly attributed to the agent;
-- `mode of study` remains unresolved because the enrollment certificate does not explicitly state it;
-- the form preserves the ₹3,50,000 application value while surfacing the ₹3,20,000 evidence conflict;
-- the income certificate remains blocked because it is outside the accepted 12-month validity window;
-- preflight reports blockers, unresolved confirmations, and the missing human declaration;
-- the agent cannot complete the truthfulness declaration;
-- there is intentionally no `submit_application` WebMCP tool.
+- six current evidence-backed fields are filled through WebMCP;
+- uncertain fields remain unresolved;
+- a seeded ₹3,50,000 vs ₹3,20,000 income conflict remains visible;
+- a stale income certificate remains blocked;
+- agent edits are visibly attributed and reversible;
+- the truthfulness declaration remains human-only;
+- final submission is not exposed as a WebMCP capability.
 
-## Why WebMCP
+Then ask:
 
-webclerk is not using WebMCP as a wrapper around a normal chatbot feature. The page itself exposes semantic capabilities such as `get_application_state`, `fill_verified_fields_from_evidence`, `list_evidence`, `inspect_field`, and `run_preflight` through `document.modelContext.registerTool(...)`.
+> Why didn't you fill mode of study?
 
-That means an external agent can work with **application concepts directly** instead of relying on brittle DOM scraping, screen coordinates, or a one-off integration. Human and agent operate over the same browser-visible state, and every WebMCP mutation goes back through the page's deterministic evidence rules.
+and:
 
-This enables a collaboration model where:
+> Check everything before I submit.
 
-- the **site** defines what evidence and actions mean;
-- the **agent** can prepare reversible, non-consequential edits;
-- the **human** explicitly approves writes and retains authority over ambiguous facts, truthfulness attestations, and final submission.
+and finally:
 
-## Trust invariants
+> Complete the declaration for me.
 
-1. **Evidence, not confidence** — model confidence alone can never make a value verified.
-2. **Uncertainty stays visible** — unsupported, ambiguous, stale, or conflicting information is never silently promoted.
-3. **Agent edits are reversible** — agent-authored changes are visibly attributed and can be undone.
-4. **Conflicts are surfaced, not auto-resolved** — the agent cannot silently choose between contradictory values.
-5. **Human commits** — declaration and final submission remain human actions.
+The correct result is a structured refusal for the declaration.
 
-## WebMCP tools
+### 2. Motor insurance claim — live generalization proof
 
-The complete implementation is in [`webmcp/index.ts`](webmcp/index.ts).
+**https://webclerk.vercel.app/proof/insurance**
+
+This workspace uses the **same deterministic trust engine and the same nine-tool WebMCP factory** with an unrelated field set, evidence set, conflict model, and human-only legal decisions.
+
+Try:
+
+> Fill everything you can verify from the claim evidence. Don't guess anything.
+
+Expected result:
+
+- claimant name, policy number, vehicle registration and incident date are evidence-backed writes;
+- a seeded ₹85,000 vs ₹78,500 repair-estimate conflict is preserved;
+- fault admission and the first-person incident narrative remain claimant-confirmation fields;
+- the fraud declaration remains human-only.
+
+This second workflow exists specifically to prove that webclerk is a reusable WebMCP trust pattern rather than a scholarship-specific script.
+
+## WebMCP surface
+
+The implementation lives in [`webmcp/index.ts`](webmcp/index.ts).
 
 webclerk exposes exactly nine semantic tools:
 
 | Tool | Type | Purpose |
 |---|---|---|
-| `get_application_state` | Read | Read completion, section state, blockers, and safe next actions |
+| `get_application_state` | Read | Read completion, blockers, safe actions, and machine-readable authority |
 | `fill_verified_fields_from_evidence` | **Write** | Bulk-fill only incomplete fields backed by current acceptable evidence |
-| `inspect_field` | Read | Inspect one field's value, provenance, evidence and validation state |
-| `list_evidence` | Read | Read supporting evidence and its validity |
-| `suggest_field_value` | Read | Suggest a value only when acceptable evidence supports it |
-| `set_field_value` | **Write** | Apply one reversible field edit through deterministic evidence rules |
-| `find_missing_information` | Read | Find incomplete, blocked, or confirmation-required fields |
-| `check_consistency` | Read | Surface contradictions between form state and evidence |
+| `inspect_field` | Read | Inspect one field's value, evidence, provenance and decision state |
+| `list_evidence` | Read | Read supporting evidence and validity |
+| `suggest_field_value` | Read | Suggest only evidence-supported values |
+| `set_field_value` | **Write** | Apply one reversible field edit after deterministic authorization |
+| `find_missing_information` | Read | Find unresolved, blocked, or confirmation-required fields |
+| `check_consistency` | Read | Surface contradictions between current state and evidence |
 | `run_preflight` | Read | Run deterministic final checks before human review |
 
-The Site Tools surface classifies them as **7 read tools and 2 write tools**. There is deliberately **no** `submit_application` tool.
+There is deliberately **no submission tool**.
 
-### Bulk verified preparation
+## Machine-readable authority
 
-`fill_verified_fields_from_evidence` is the preferred semantic capability for:
-
-> Fill everything you can verify from my documents. Don't guess anything.
-
-At reset, `get_application_state` reports six safe edits and recommends the bulk tool. The bulk tool applies only incomplete fields with current, acceptable mapped evidence and skips confirmation-only fields, stale evidence, unresolved conflicts, the declaration, and unsupported values.
-
-### Hard write boundary
-
-The granular `set_field_value` tool authorizes a proposed value **before** calling the application mutation bridge. Unsupported values, stale evidence, existing conflicts, confirmation-only fields, unknown fields, and the applicant declaration are rejected without changing application state.
-
-A direct unsupported write returns a structured error such as:
+[`webmcp/authority.ts`](webmcp/authority.ts) defines the explicit authority contract:
 
 ```text
+Agent may:
+✓ inspect evidence
+✓ inspect application state
+✓ suggest verified values
+✓ mutate verified fields
+✓ run preflight
+
+Agent may not:
+✕ invent unsupported values
+✕ resolve conflicts silently
+✕ confirm applicant-only knowledge
+✕ attest truthfulness
+✕ submit
+```
+
+`get_application_state` and `run_preflight` expose this contract to the agent directly.
+
+## Hard write boundary
+
+Granular agent writes are validated **before** the application mutation bridge is called.
+
+Possible structured refusals include:
+
+```text
+FIELD_NOT_FOUND
+HUMAN_ACTION_REQUIRED
+HUMAN_CONFIRMATION_REQUIRED
+STALE_EVIDENCE
+EVIDENCE_REQUIRES_ATTENTION
+CONFLICT_REQUIRES_HUMAN
 UNSUPPORTED_VALUE
 ```
 
-A direct agent attempt to complete the applicant declaration is rejected with:
+This is capability enforcement, not prompt-only guidance.
+
+## Evidence security semantics
+
+Evidence-derived WebMCP outputs use `untrustedContentHint`.
+
+The design principle is:
+
+> **Evidence is data, not agent instruction.**
+
+This keeps document or externally sourced content semantically separate from instructions to the agent.
+
+Tool metadata is also tested for concise description/parameter budgets so the semantic surface remains agent-friendly.
+
+## Reusable trust engine
+
+[`webmcp/domain.ts`](webmcp/domain.ts) accepts workflow-specific `TrustRules`:
+
+- evidence facts;
+- confirmation-only fields;
+- confirmation reasons;
+- evidence validity;
+- conflicts;
+- deterministic preflight.
+
+Reference workflows:
 
 ```text
-HUMAN_ACTION_REQUIRED
+webmcp/workflows/
+├── insurance.ts
+├── insurance.test.ts
+└── insurance.webmcp.test.ts
 ```
 
-The preferred preparation flow is:
+The insurance tests prove both the **domain engine** and the **WebMCP tool factory** generalize independently of the scholarship fixture.
 
-```text
-get_application_state
-  → fill_verified_fields_from_evidence
-  → run_preflight
-```
+## Adversarial evals
+
+[`webmcp/evals.test.ts`](webmcp/evals.test.ts) intentionally tests unsafe requests such as:
+
+- fabricate a plausible value;
+- ignore stale evidence;
+- silently override a conflict;
+- fill a self-declared field;
+- complete a truthfulness declaration;
+- submit the workflow.
+
+Unsafe requests must fail before mutation, while legitimate evidence-backed preparation must still succeed.
+
+See [`docs/EVALS.md`](docs/EVALS.md).
 
 ## Architecture
 
 <p align="center">
-  <img src="docs/assets/readme/webclerk-architecture-flow.png" alt="webclerk architecture — evidence, deterministic validation, WebMCP semantic tools and shared human-visible form state" width="100%" />
+  <img src="docs/assets/readme/webclerk-architecture-flow.png" alt="webclerk architecture — deterministic evidence validation, WebMCP semantic tools, and shared human-visible state" width="100%" />
 </p>
 
-The architecture is deliberately site-centered: evidence is interpreted by deterministic rules, WebMCP exposes semantic capabilities over those rules, and both the agent and applicant operate on the same human-visible application state.
+```text
+evidence
+   ↓
+workflow-specific trust rules
+   ↓
+deterministic validation + authorization
+   ↓
+semantic WebMCP capabilities
+   ↓
+shared browser-visible state
+   ↕
+human + agent
+```
 
-The agent and the human are **not editing separate copies** of the application.
+The scholarship and insurance workspaces both use this model.
 
-## Evidence model
+## Repository layout
 
-The demo includes five fictional source PDFs:
+```text
+webmcp/
+├── index.ts                     workflow-configurable WebMCP tool layer
+├── domain.ts                    deterministic trust engine
+├── authority.ts                 machine-readable agent authority
+├── data.ts                      scholarship reference data
+├── evals.test.ts                adversarial authority evals
+├── *.test.ts                    tool, metadata and domain contract tests
+└── workflows/
+    ├── insurance.ts             second consequential workflow
+    ├── insurance.test.ts
+    └── insurance.webmcp.test.ts
 
-- `Identity_Card.pdf`
-- `Enrollment_Certificate.pdf`
-- `Previous_Year_Marksheet.pdf`
-- `Income_Certificate.pdf`
-- `Domicile_Certificate.pdf`
+apps/web/
+├── src/App.tsx                  primary scholarship workspace
+├── src/InsuranceProof.tsx       live insurance WebMCP proof workspace
+└── src/LandingPage.tsx
 
-The PDFs are human-inspectable, while the MVP uses a fixed pre-extracted structured evidence set so the trust and WebMCP behavior stays deterministic and auditable. Arbitrary PDF ingestion/OCR is intentionally outside the hackathon MVP.
-
-## Broader applications
-
-The scholarship is a reference workflow. The same trust pattern applies to:
-
-- insurance claims;
-- visa applications;
-- public benefits;
-- financial aid;
-- compliance questionnaires;
-- healthcare intake;
-- procurement and vendor onboarding.
-
-## Verified environments
-
-The prototype has been exercised in:
-
-- **Brave with WebMCP enabled** for direct browser-level tool discovery and invocation;
-- **ChatGPT desktop built-in browser with 5.6 Sol Medium** for natural-language WebMCP orchestration and approved write execution;
-- the current **Vercel production deployment**.
-
-Verified behavior includes:
-
-- discovery of exactly nine semantic tools;
-- correct 7-read / 2-write classification;
-- natural-language selection of the semantic bulk-fill tool;
-- explicit user approval before the write;
-- evidence-backed shared-state mutation;
-- visible **WebMCP · Agent via WebMCP** attribution;
-- conflict detection;
-- stale-evidence detection;
-- uncertainty preservation;
-- deterministic preflight;
-- declaration rejection with `HUMAN_ACTION_REQUIRED`;
-- rejection of unauthorized granular writes before mutation;
-- no autonomous submit capability.
+docs/
+├── JUDGE_GUIDE.md
+├── EVALS.md
+├── WEBMCP.md
+├── VERIFICATION.md
+├── DEMO.md
+└── SUBMISSION.md
+```
 
 ## Run locally
 
 ```bash
 npm install
+npm test
+npm run build
 npm run dev
 ```
 
-Tests and production build:
+Primary routes:
 
-```bash
-npm test
-npm run build
-npm run preview
+```text
+/                  landing page
+/demo              scholarship WebMCP workspace
+/proof/insurance   insurance WebMCP proof workspace
 ```
 
-Root scripts orchestrate the `apps/web` workspace, while the WebMCP implementation remains top-level under `webmcp/`.
+## Judge verification
 
-## Project docs
+For the shortest evaluation path, open [`docs/JUDGE_GUIDE.md`](docs/JUDGE_GUIDE.md).
 
-- [`docs/PRD.md`](docs/PRD.md) — product requirements
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — architecture and data model
-- [`docs/WEBMCP.md`](docs/WEBMCP.md) — WebMCP contract
-- [`docs/VERIFICATION.md`](docs/VERIFICATION.md) — browser and release verification
-- [`docs/DEMO.md`](docs/DEMO.md) — exact sub-three-minute demo script
-- [`docs/RECORDING_PLAN.md`](docs/RECORDING_PLAN.md) — shot-by-shot recording plan
-- [`docs/SUBMISSION.md`](docs/SUBMISSION.md) — ready-to-paste submission copy
-- [`docs/RELEASE_FREEZE.md`](docs/RELEASE_FREEZE.md) — frozen implementation baseline
+The repository includes automated proof for:
 
-## Status
+- exactly nine semantic tools;
+- 7-read / 2-write classification;
+- safe bulk preparation;
+- pre-mutation authorization;
+- stale evidence rejection;
+- conflict preservation;
+- human-only declarations;
+- absent submission capability;
+- `untrustedContentHint` on evidence-derived output;
+- machine-readable agent authority;
+- adversarial refusal cases;
+- reusable trust rules;
+- reusable WebMCP tool factory across scholarship and insurance.
 
-- [x] Product foundation
-- [x] Deterministic evidence and validation logic
-- [x] WebMCP semantic tool layer
-- [x] Trust UX and provenance
-- [x] Direct browser-level WebMCP verification
-- [x] Natural-language semantic tool selection
-- [x] Approved WebMCP write execution in production
-- [x] Agent-vs-applicant provenance
-- [x] Conflict/stale-evidence preflight
-- [x] Human-only declaration boundary
-- [x] Agent writes authorized before mutation
-- [x] WebMCP implementation frozen
-- [ ] Final clean release rehearsal
-- [ ] Record and publish final demo video
-- [ ] Submit hackathon entry
+## Prototype scope
+
+The demo evidence is fictional and pre-extracted into deterministic structured facts. Arbitrary OCR/document extraction is intentionally outside the hackathon core: the challenge contribution is the **trust and authority layer after evidence exists**, not another document parser.
+
+The scholarship and government-style interface are fictional and are not affiliated with any public authority.
+
+## Broader applications
+
+The same pattern can apply to:
+
+- insurance claims;
+- visa and immigration forms;
+- financial aid;
+- public benefits;
+- compliance questionnaires;
+- healthcare intake;
+- procurement and vendor onboarding.
+
+The goal is not universal autofill. It is a web where agents can be useful **without silently becoming the authority**.
 
 ## License
 
