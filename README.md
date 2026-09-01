@@ -1,8 +1,8 @@
 <div align="center">
 
-# webclerk
+<img src="docs/assets/readme/webclerk-readme-hero.png" alt="webclerk — Never guess on consequential forms" width="100%" />
 
-### Never guess on consequential forms.
+<br />
 
 [![CI](https://github.com/ThunderKhan/webclerk/actions/workflows/ci.yml/badge.svg)](https://github.com/ThunderKhan/webclerk/actions/workflows/ci.yml)
 ![WebMCP](https://img.shields.io/badge/WebMCP-semantic%20tools-d7b76a)
@@ -16,7 +16,7 @@ Evidence-backed WebMCP automation that preserves uncertainty and keeps consequen
 
 **OpenAI WebMCP Challenge · Trust-first browser automation · Human-in-the-loop**
 
-[Live site](https://webclerk.vercel.app/) · [WebMCP demo](https://webclerk.vercel.app/demo) · [WebMCP implementation](webmcp/index.ts) · [Architecture](docs/ARCHITECTURE.md) · [Verification](docs/VERIFICATION.md) · [Docs](docs/WEBMCP.md)
+[Live site](https://webclerk.vercel.app/) · [WebMCP demo](https://webclerk.vercel.app/demo) · [WebMCP implementation](webmcp/index.ts) · [Architecture](#architecture) · [Verification](docs/VERIFICATION.md) · [Docs](docs/WEBMCP.md)
 
 </div>
 
@@ -41,7 +41,7 @@ webmcp/                 WebMCP tool surface + deterministic trust engine
 ├── domain.ts           evidence, validation, conflict and preflight rules
 ├── data.ts             deterministic reference application/evidence model
 ├── types.d.ts          browser WebMCP type declarations
-└── *.test.ts           domain + real registration contract tests
+└── *.test.ts           domain + registration contract tests
 
 apps/web/               Vite/React landing page and reference demo UI
 docs/                   product, architecture, verification and submission docs
@@ -52,6 +52,10 @@ The UI imports the top-level `webmcp/` modules; it does not contain a separate c
 ## Verified production flow
 
 The natural-language WebMCP path has been verified end to end in the ChatGPT desktop built-in browser using **5.6 Sol Medium**.
+
+<p align="center">
+  <img src="docs/assets/readme/webclerk-seal-wordmark.png" alt="webclerk verified agent flow from user intent through WebMCP to human-only declaration" width="100%" />
+</p>
 
 Starting from the deterministic reset state:
 
@@ -85,7 +89,7 @@ The six WebMCP edits are:
 - state of domicile;
 - domicile certificate number.
 
-The agent deliberately leaves the stale/conflicting income evidence, confirmation-only fields, truthfulness declaration, and final submission untouched.
+The agent deliberately leaves stale/conflicting income evidence, confirmation-only fields, the truthfulness declaration, and final submission untouched.
 
 > **Demo environment note:** use a model/runtime that supports ChatGPT Site Tools write execution. The verified production run used **5.6 Sol Medium**. Lighter runtimes tested during development could discover tools but did not consistently execute the WebMCP write path.
 
@@ -93,7 +97,7 @@ The agent deliberately leaves the stale/conflicting income evidence, confirmatio
 
 Open the live workspace at:
 
-https://webclerk.vercel.app/demo
+**https://webclerk.vercel.app/demo**
 
 Use this sequence:
 
@@ -140,17 +144,19 @@ The complete implementation is in [`webmcp/index.ts`](webmcp/index.ts).
 
 webclerk exposes exactly nine semantic tools:
 
-- `get_application_state`
-- `fill_verified_fields_from_evidence`
-- `inspect_field`
-- `list_evidence`
-- `suggest_field_value`
-- `set_field_value`
-- `find_missing_information`
-- `check_consistency`
-- `run_preflight`
+| Tool | Type | Purpose |
+|---|---|---|
+| `get_application_state` | Read | Read completion, section state, blockers, and safe next actions |
+| `fill_verified_fields_from_evidence` | **Write** | Bulk-fill only incomplete fields backed by current acceptable evidence |
+| `inspect_field` | Read | Inspect one field's value, provenance, evidence and validation state |
+| `list_evidence` | Read | Read supporting evidence and its validity |
+| `suggest_field_value` | Read | Suggest a value only when acceptable evidence supports it |
+| `set_field_value` | **Write** | Apply one reversible field edit through deterministic evidence rules |
+| `find_missing_information` | Read | Find incomplete, blocked, or confirmation-required fields |
+| `check_consistency` | Read | Surface contradictions between form state and evidence |
+| `run_preflight` | Read | Run deterministic final checks before human review |
 
-The Site Tools surface classifies them as **7 read tools and 2 write tools**. `fill_verified_fields_from_evidence` and `set_field_value` are explicitly annotated as writes. There is deliberately **no** `submit_application` tool.
+The Site Tools surface classifies them as **7 read tools and 2 write tools**. There is deliberately **no** `submit_application` tool.
 
 ### Bulk verified preparation
 
@@ -178,25 +184,13 @@ get_application_state
 
 ## Architecture
 
-```text
-Fictional source PDFs
-        │
-        ▼
-Pre-extracted structured evidence
-        │
-        ▼
-Deterministic evidence + validation engine
-        │
-        ├──────────────► Human-visible form state
-        │                       ▲
-        ▼                       │
-WebMCP semantic tools ──────────┘
-        │
-        ▼
-ChatGPT / external browser agent
-```
+<p align="center">
+  <img src="docs/assets/readme/webclerk-architecture-flow.png" alt="webclerk architecture — evidence, deterministic validation, WebMCP semantic tools and shared human-visible form state" width="100%" />
+</p>
 
-The agent and the human are not editing separate copies of the application. Both act on the same page state.
+The architecture is deliberately site-centered: evidence is interpreted by deterministic rules, WebMCP exposes semantic capabilities over those rules, and both the agent and applicant operate on the same human-visible application state.
+
+The agent and the human are **not editing separate copies** of the application.
 
 ## Evidence model
 
@@ -228,7 +222,7 @@ The prototype has been exercised in:
 
 - **Brave with WebMCP enabled** for direct browser-level tool discovery and invocation;
 - **ChatGPT desktop built-in browser with 5.6 Sol Medium** for natural-language WebMCP orchestration and approved write execution;
-- **production deployment** on Vercel, with the original verified Netlify deployment retained as a backup.
+- the verified **Netlify production deployment**, with Vercel now hosting the current release.
 
 Verified behavior includes:
 
@@ -260,6 +254,8 @@ npm run build
 npm run preview
 ```
 
+Root scripts orchestrate the `apps/web` workspace, while the WebMCP implementation remains top-level under `webmcp/`.
+
 ## Project docs
 
 - [`docs/PRD.md`](docs/PRD.md) — product requirements
@@ -284,7 +280,7 @@ npm run preview
 - [x] Conflict/stale-evidence preflight
 - [x] Human-only declaration boundary
 - [x] WebMCP implementation frozen
-- [ ] One final clean rehearsal after credits reset
+- [ ] Final clean release rehearsal
 - [ ] Record and publish final demo video
 - [ ] Submit hackathon entry
 
