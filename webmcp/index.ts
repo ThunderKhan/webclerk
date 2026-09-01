@@ -48,6 +48,81 @@ function stringArg(input: Record<string, unknown> | undefined, key: string) {
   return typeof value === "string" ? value : undefined;
 }
 
+function normalizeValue(value: string) {
+  return value.trim().replace(/\s+/g, " ").toLocaleLowerCase("en-IN");
+}
+
+function authorizeAgentMutation(fields: ApplicationField[], fieldId: string, value: string) {
+  const field = fields.find((item) => item.id === fieldId);
+  if (!field) {
+    return {
+      ok: false as const,
+      code: "FIELD_NOT_FOUND",
+      message: "No application field has that id.",
+    };
+  }
+
+  if (fieldId === "declaration") {
+    return {
+      ok: false as const,
+      code: "HUMAN_ACTION_REQUIRED",
+      message: "The declaration is a consequential truthfulness attestation. It is intentionally not agent-authorizable. The applicant must review the form and perform this action directly.",
+    };
+  }
+
+  const inspection = inspectField(fieldId, fields, evidenceDocuments);
+  if (!inspection) {
+    return {
+      ok: false as const,
+      code: "FIELD_NOT_FOUND",
+      message: "No application field has that id.",
+    };
+  }
+
+  if (!inspection.evidence) {
+    return {
+      ok: false as const,
+      code: "HUMAN_CONFIRMATION_REQUIRED",
+      message: inspection.reason ?? "No acceptable evidence is mapped to this field. The applicant must confirm it directly.",
+    };
+  }
+
+  if (isEvidenceStale(inspection.evidence)) {
+    return {
+      ok: false as const,
+      code: "STALE_EVIDENCE",
+      message: `${inspection.evidence.name} is outside its accepted validity window and cannot authorize an agent write.`,
+    };
+  }
+
+  if (inspection.evidence.status !== "accepted") {
+    return {
+      ok: false as const,
+      code: "EVIDENCE_REQUIRES_ATTENTION",
+      message: `${inspection.evidence.name} requires human attention before it can authorize an agent write.`,
+    };
+  }
+
+  if (inspection.status === "blocked" && field.value.trim() !== "" && normalizeValue(field.value) !== normalizeValue(value)) {
+    return {
+      ok: false as const,
+      code: "CONFLICT_REQUIRES_HUMAN",
+      message: inspection.reason ?? "The current application value conflicts with evidence and must be resolved by the applicant.",
+    };
+  }
+
+  const suggestion = suggestFieldValue(fieldId, evidenceDocuments);
+  if (!suggestion || normalizeValue(suggestion.value) !== normalizeValue(value)) {
+    return {
+      ok: false as const,
+      code: "UNSUPPORTED_VALUE",
+      message: "The requested value is not supported by current acceptable evidence, so webclerk refused to mutate the field.",
+    };
+  }
+
+  return { ok: true as const };
+}
+
 function summarizeSections(fields: ApplicationField[]) {
   const sections = ["personal", "education", "financial", "eligibility"] as const;
   return sections.map((section) => {
@@ -230,7 +305,7 @@ export function createWebMcpTools(bridge: WebMcpBridge): WebMcpToolDefinition[] 
             : false,
           status: inspection.status,
           reason: inspection.reason,
-          agentMutationAllowed: fieldId !== "declaration",
+          agentMutationAllowed: fieldId !== "declaration" && inspection.evidence != null && !stale && inspection.evidence.status === "accepted" && inspection.status !== "blocked",
         });
       },
     },
@@ -303,13 +378,13 @@ export function createWebMcpTools(bridge: WebMcpBridge): WebMcpToolDefinition[] 
     {
       name: "set_field_value",
       title: "Set one application field",
-      description: "Write one specific reversible, non-consequential field value through webclerk's evidence rules. This granular mutation is not the preferred path when the user asks to fill all verifiable fields; use fill_verified_fields_from_evidence for bulk preparation. Do not invent confirmation-only values, use stale evidence, overwrite unresolved conflicts, attest the declaration, or submit.",
+      description: "Write one specific reversible field value only when current acceptable evidence authorizes that exact value. Unsupported guesses, stale evidence, unresolved conflicts, confirmation-only fields, and the declaration are rejected before mutation. This granular mutation is not the preferred path when the user asks to fill all verifiable fields; use fill_verified_fields_from_evidence for bulk preparation. It never submits.",
       annotations: { readOnlyHint: false },
       inputSchema: {
         type: "object",
         properties: {
           fieldId: { type: "string", description: "Stable field identifier to update." },
-          value: { type: "string", description: "Value to place in the field. Do not invent unsupported values." },
+          value: { type: "string", description: "Evidence-backed value to place in the field." },
         },
         required: ["fieldId", "value"],
         additionalProperties: false,
@@ -320,12 +395,13 @@ export function createWebMcpTools(bridge: WebMcpBridge): WebMcpToolDefinition[] 
         if (!fieldId || value === undefined) {
           return result({ ok: false, code: "INVALID_ARGUMENT", message: "fieldId and value are required." });
         }
-        if (fieldId === "declaration") {
+        const authorization = authorizeAgentMutation(bridge.getFields(), fieldId, value);
+        if (!authorization.ok) {
           return result({
             ok: false,
-            code: "HUMAN_ACTION_REQUIRED",
+            code: authorization.code,
             fieldId,
-            message: "The declaration is a consequential truthfulness attestation. It is intentionally not agent-authorizable. The applicant must review the form and perform this action directly.",
+            message: authorization.message,
           });
         }
         return result(bridge.setFieldFromAgent(fieldId, value));
