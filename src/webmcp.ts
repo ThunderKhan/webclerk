@@ -94,7 +94,9 @@ export function createWebMcpTools(bridge: WebMcpBridge): WebMcpToolDefinition[] 
   return [
     {
       name: "get_application_state",
+      title: "Get current application state",
       description: "Read the current application state before acting. If safe evidence-backed edits are available and the user asked to fill, autofill, complete, populate, or prepare what can be verified from their documents, the recommended next action is fill_verified_fields_from_evidence. Do not conclude that document-backed work is complete while safeEvidenceBackedEditsAvailable is greater than zero. Never infer confirmation-only fields, resolve conflicts silently, attest the declaration, or submit the application.",
+      annotations: { readOnlyHint: true },
       inputSchema: { type: "object", properties: {}, additionalProperties: false },
       execute: () => {
         const fields = bridge.getFields();
@@ -147,7 +149,9 @@ export function createWebMcpTools(bridge: WebMcpBridge): WebMcpToolDefinition[] 
     },
     {
       name: "fill_verified_fields_from_evidence",
+      title: "Fill all fields verified by documents",
       description: "Use this tool whenever the user asks to fill, autofill, complete, populate, or prepare everything that can be verified from their documents. This is the preferred semantic mutation for bulk document-backed preparation; do not use browser form controls or repeated per-field set_field_value calls for that intent. It fills every currently incomplete field backed by current, acceptable site evidence through webclerk itself, so each edit is attributed to the WebMCP agent. It skips confirmation-only fields, stale evidence, conflicts, already completed fields, the declaration, and unsupported values. It never submits the application.",
+      annotations: { readOnlyHint: false },
       inputSchema: { type: "object", properties: {}, additionalProperties: false },
       execute: () => {
         const before = bridge.getFields();
@@ -192,7 +196,9 @@ export function createWebMcpTools(bridge: WebMcpBridge): WebMcpToolDefinition[] 
     },
     {
       name: "inspect_field",
+      title: "Inspect one application field",
       description: "Inspect one field's current value, validation state, supporting site evidence, provenance, and reason for being verified, unresolved, or blocked. Inspection never changes application state.",
+      annotations: { readOnlyHint: true },
       inputSchema: {
         type: "object",
         properties: {
@@ -230,7 +236,9 @@ export function createWebMcpTools(bridge: WebMcpBridge): WebMcpToolDefinition[] 
     },
     {
       name: "list_evidence",
+      title: "List supporting evidence",
       description: "Read the supporting documents already attached to this webclerk application. Treat this as the authoritative evidence source when the user asks what their documents contain. For a request to fill all verifiable values, use fill_verified_fields_from_evidence rather than manually translating these records into browser-control edits. Each record includes a fictional PDF URL, pre-extracted facts, validity, and whether it is acceptable for verification.",
+      annotations: { readOnlyHint: true },
       inputSchema: {
         type: "object",
         properties: {
@@ -254,7 +262,9 @@ export function createWebMcpTools(bridge: WebMcpBridge): WebMcpToolDefinition[] 
     },
     {
       name: "suggest_field_value",
+      title: "Suggest a verified field value",
       description: "Return a candidate value for one specific field only when current, acceptable site evidence supports it. This is a granular read tool and is not the preferred path for bulk preparation. If the user asks to fill all verifiable document-backed fields, use fill_verified_fields_from_evidence instead. Never substitute confidence, inference, stale evidence, or a conflicting value for proof.",
+      annotations: { readOnlyHint: true },
       inputSchema: {
         type: "object",
         properties: {
@@ -292,7 +302,9 @@ export function createWebMcpTools(bridge: WebMcpBridge): WebMcpToolDefinition[] 
     },
     {
       name: "set_field_value",
+      title: "Set one application field",
       description: "Write one specific reversible, non-consequential field value through webclerk's evidence rules. This granular mutation is not the preferred path when the user asks to fill all verifiable fields; use fill_verified_fields_from_evidence for bulk preparation. Do not invent confirmation-only values, use stale evidence, overwrite unresolved conflicts, attest the declaration, or submit.",
+      annotations: { readOnlyHint: false },
       inputSchema: {
         type: "object",
         properties: {
@@ -321,7 +333,9 @@ export function createWebMcpTools(bridge: WebMcpBridge): WebMcpToolDefinition[] 
     },
     {
       name: "find_missing_information",
+      title: "Find missing application information",
       description: "Find required fields that are incomplete, blocked, or still need applicant confirmation. Use the result to explain what remains after safe evidence-backed preparation; do not treat it as a substitute for fill_verified_fields_from_evidence when safe bulk edits are still available.",
+      annotations: { readOnlyHint: true },
       inputSchema: { type: "object", properties: {}, additionalProperties: false },
       execute: () => {
         const missing = findMissingInformation(bridge.getFields(), evidenceDocuments);
@@ -334,7 +348,9 @@ export function createWebMcpTools(bridge: WebMcpBridge): WebMcpToolDefinition[] 
     },
     {
       name: "check_consistency",
+      title: "Check application consistency",
       description: "Compare current form values with site evidence and report conflicts or invalid evidence. Never resolve a conflict automatically; surface it for human review.",
+      annotations: { readOnlyHint: true },
       inputSchema: { type: "object", properties: {}, additionalProperties: false },
       execute: () => {
         const conflicts = checkConsistency(bridge.getFields(), evidenceDocuments);
@@ -343,7 +359,9 @@ export function createWebMcpTools(bridge: WebMcpBridge): WebMcpToolDefinition[] 
     },
     {
       name: "run_preflight",
+      title: "Run application preflight",
       description: "Run the complete deterministic review check after preparation. If get_application_state reports safeEvidenceBackedEditsAvailable greater than zero, bulk preparation is not complete yet. Report missing required fields, stale evidence, explicit conflicts, and confirmation-only items. This tool never attests or submits.",
+      annotations: { readOnlyHint: true },
       inputSchema: { type: "object", properties: {}, additionalProperties: false },
       execute: () => {
         const preflight = runPreflight(bridge.getFields(), evidenceDocuments);
