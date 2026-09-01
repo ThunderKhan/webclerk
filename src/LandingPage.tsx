@@ -1,4 +1,4 @@
-import type { PointerEvent } from "react";
+import { useRef, type PointerEvent } from "react";
 import "./landing.css";
 import "./landing-overrides.css";
 
@@ -11,14 +11,40 @@ const tools = [
 ] as const;
 
 function LandingPage() {
+  const pointerFrame = useRef<number | null>(null);
+
   const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "touch" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
     const shell = event.currentTarget;
-    shell.style.setProperty("--pointer-x", `${event.clientX}px`);
-    shell.style.setProperty("--pointer-y", `${event.clientY}px`);
+    const x = event.clientX;
+    const y = event.clientY;
+
+    if (pointerFrame.current !== null) cancelAnimationFrame(pointerFrame.current);
+    pointerFrame.current = requestAnimationFrame(() => {
+      shell.style.setProperty("--pointer-x", `${x}px`);
+      shell.style.setProperty("--pointer-y", `${y}px`);
+      pointerFrame.current = null;
+    });
+  };
+
+  const handlePointerEnter = (event: PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "touch" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    event.currentTarget.style.setProperty("--pointer-glow-opacity", "1");
+  };
+
+  const handlePointerLeave = (event: PointerEvent<HTMLDivElement>) => {
+    event.currentTarget.style.setProperty("--pointer-glow-opacity", "0");
   };
 
   return (
-    <div id="top" className="landing-shell" onPointerMove={handlePointerMove}>
+    <div
+      id="top"
+      className="landing-shell"
+      onPointerMove={handlePointerMove}
+      onPointerEnter={handlePointerEnter}
+      onPointerLeave={handlePointerLeave}
+    >
       <header className="landing-nav">
         <a className="landing-brand" href="#top" aria-label="webclerk home"><span className="brand-seal">✣</span><span>webclerk</span></a>
         <nav aria-label="Landing navigation"><a href="#why">Why</a><a href="#trust">Trust</a><a href="#workflow">How it works</a><a href="#tools">Tools</a></nav>
