@@ -85,6 +85,7 @@ function LandingPage() {
                 <summary className="primary-btn"><span>Explore live demos</span><DemoChevron /></summary>
                 <DemoMenu />
               </details>
+              <a className="ghost-btn" href="https://www.youtube.com/watch?v=o28JeFA0uCs" target="_blank" rel="noreferrer">Watch 3-min demo</a>
               <a className="ghost-btn" href="https://github.com/ThunderKhan/webclerk" target="_blank" rel="noreferrer">View on GitHub</a>
             </div>
             <div className="hero-proof"><span>✓ Evidence-backed</span><span>✓ Semantic WebMCP tools</span><span>✓ Human-first boundaries</span></div>
